@@ -11,6 +11,39 @@ golven doorgevoerd: **golf 1** op 2026-06-25 (BSN-lek, CLI-vlaggen, packaging,
 repo-URL, hygiëne) en **consolidatie + scoring-guard** op 2026-06-26. De item-codes
 (V01, V02, …) verwijzen naar de interne verbeteringen-prioriteitenmatrix.
 
+## [1.1.2] — 2026-06-29
+
+Tweede golf "legal/docs hardening": juridische en documentaire correcties zonder impact op
+de maskeer-output (geen regressie-meting nodig; bestaande baselines blijven geldig).
+
+### Gewijzigd
+- **Auteursrecht/herkomst rechtgezet** (A1). De gemeente Rotterdam is als enige rechthebbende
+  vermeld in de herkomst- en copyrightteksten. (`README.md`,
+  `src/anonymizer/anonymizer.py`, `src/anonymizer/helpers/sample_testset/sample_testset.py`)
+- **Licentie conform gemaakt** (A3, V06-rest). De Engelse canonieke EUPL-1.2-tekst is
+  toegevoegd als `LICENSE.md` (zodat de licentie automatisch herkend wordt); de Nederlandse
+  vertaling is hernoemd van `LICENCE_EUPL_1_2_NL.md` naar `LICENSE_NL.md`. `pyproject.toml`
+  gebruikt nu de SPDX-expressie `license = "EUPL-1.2"` met `license-files`, en vereist
+  `setuptools>=77` (PEP 639).
+- **Versie gelijkgetrokken** (A4, V22). `__version__` (`anonymizer.py`), `pyproject.toml` en
+  deze CHANGELOG noemen nu alle drie `1.1.2` (voorheen liep `__version__` op 1.1.0 achter).
+- **Robuustere modellading** (B1, V12). De bare `except:` bij het lokaal laden van het
+  GLiNER-model is vervangen door `except Exception as e:` met een duidelijker melding;
+  systeemsignalen (zoals onderbrekingen) worden niet langer stil opgeslokt. Geen
+  gedragswijziging in de fallback. (`src/anonymizer/anonymizer.py`)
+
+### Toegevoegd
+- **Privacy/AVG-disclaimer** in de README (EN + NL) (A2): het resultaat van de anonimisatie is
+  niet gegarandeerd volledig en hangt mede af van de aangeboden informatie; of aanvullende
+  controle nodig is hangt af van de eisen die de toepassing stelt, en die afweging ligt bij de
+  gebruikende organisatie.
+
+### Verwijderd
+- **Stale doctest** onderaan `anonymizer.py` (A5, V20) die verwees naar niet-bestaande tags
+  (`<CLAIM_ID>`, `<Time>`, …) — verwijderd om verwarring te voorkomen.
+
+---
+
 ## [1.1.1] — 2026-06-26
 
 ### Beveiliging / Privacy
@@ -67,7 +100,7 @@ repo-URL, hygiëne) en **consolidatie + scoring-guard** op 2026-06-26. De item-c
 ---
 
 ### Niet in deze golven (bewust open)
-- V06-rest — LICENSE-bestand + Kyden-copyright (EUPL v1.2 NL staat al in de
+- V06-rest — LICENSE-bestand (inmiddels toegevoegd in 1.1.2; EUPL v1.2 NL staat al in de
   canonieke repo).
 - V07 — herkomst `Sample_Rotterdam.xlsx` (synthetisch vs. echt niet vast te stellen).
 - V11 — Credit_Card over-maskeert een 13–19-cijferig bestel-/barcodenummer

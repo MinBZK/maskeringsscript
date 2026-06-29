@@ -2,9 +2,9 @@
 """
 sample_testset.py - create a 400-row test sample per “Bron Groepering”
 
-Dit model is ontwikkeld in samenwerking tussen de gemeente Rotterdam en Kyden. Auteursrechten rusten geheel bij de gemeente Rotterdam.
+Dit model is ontwikkeld door de gemeente Rotterdam. Auteursrechten rusten geheel bij de gemeente Rotterdam.
 
-This model was developed in cooperation between the city of Rotterdam and Kyden. Copyright City of Rotterdam.
+This model was developed by the City of Rotterdam. Copyright City of Rotterdam.
 
 Licence: EUPL
 

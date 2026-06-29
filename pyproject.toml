@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=42"]
+requires = ["setuptools>=77.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "anonymizer"
-version = "1.1.1"
+version = "1.1.2"
 requires-python = ">=3.10"
 dependencies = [
     "pandas>=2.3.2",
@@ -17,7 +17,8 @@ dependencies = [
     "xlsxwriter>=3.2.9"
 ]
 readme = "README.md"
-license = { text = "EUPL" }
+license = "EUPL-1.2"
+license-files = ["LICENSE.md", "LICENSE_NL.md"]
 
 [tool.setuptools]
 include-package-data = true
