@@ -1,5 +1,5 @@
 """
-This model was developed in cooperation between the city of Rotterdam and Kyden. Copyright City of Rotterdam.
+This model was developed by the City of Rotterdam. Copyright City of Rotterdam.
 
 Licence: EUPL
 
@@ -96,7 +96,7 @@ with translation_file.open("r", encoding="utf-8") as f:
 
 # Exported symbols
 __all__ = ["RegexAnonymizer", "ListAnonymizer", "NERAnonymizer", "CombinedAnonymizer", "TAGGED_PATTERNS", "__version__"]
-__version__ = "1.1.0"
+__version__ = "1.1.2"
 
 # Logging setup
 LOGGER = logging.getLogger(__name__)
@@ -823,8 +823,8 @@ class NERAnonymizer:
         
         try:
             self.model = GLiNER.from_pretrained(model_name, local_files_only=True)
-        except:
-            print(f"Model {model_name} not found locally. Downloading from Hugging Face...")
+        except Exception as e:
+            print(f"Could not load model {model_name} locally ({e}); downloading from Hugging Face...")
             self.model = GLiNER.from_pretrained(model_name)
 
         self._distinct_tags: bool = distinct_tags if distinct_tags is not None else DISTINCT_TAGS
@@ -1031,15 +1031,3 @@ def main() -> None:  # pragma: no cover – CLI wrapper
 
 if __name__ == "__main__":
     main()
-
-
-# --------------------------------------------------------------------------- #
-# Doctest                                                                    #
-# --------------------------------------------------------------------------- #
-# >>> a = RegexAnonymizer()
-# >>> sample = (
-# ...     "Claim 0000000000 Euro 8,50 op 16 / 04 / 2022 (7u tot 20u); melding 0000-000000; "
-# ...     "compliment 000000-XX000000000 op 26-02-2025; juni 2020."
-# ... )
-# >>> a(sample)
-# '<CLAIM_ID> <Money> op <Date> (<Time>); <NOTIFICATION_ID>; <COMPLIMENT_ID> op <Date>; <Date_Ext>'

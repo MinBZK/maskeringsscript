@@ -1,8 +1,10 @@
 # Anonymization Script - Gemeente Rotterdam
 
-This model was developed in cooperation between the city of Rotterdam and Kyden. Copyright City of Rotterdam.
+This model was developed by the City of Rotterdam. Copyright City of Rotterdam.
 
-This repository is the published version of the anonymization tool, derived from the original developed by the City of Rotterdam in cooperation with Kyden, and released under the EUPL v1.2. It adds pre-publication hardening only; see [CHANGELOG.md](CHANGELOG.md) for the changes.
+This repository is the published version of the anonymization tool, derived from the original developed by the City of Rotterdam, and released under the EUPL v1.2. It adds pre-publication hardening only; see [CHANGELOG.md](CHANGELOG.md) for the changes.
+
+> **Privacy disclaimer.** This script anonymises text, but the result is not guaranteed to be complete and depends in part on the information provided: identifiable information may remain. Whether additional review is needed depends on the requirements of the application. That assessment lies with the organisation using it.
 
 (For Dutch, [See below](#-nederlandse-versie))
 
@@ -550,9 +552,11 @@ The developed script performs better than the previously used commercial solutio
 
 # Anonimiseringsscript – Gemeente Rotterdam
 
-Dit model is ontwikkeld in samenwerking tussen de gemeente Rotterdam en Kyden. Auteursrechten rusten geheel bij de gemeente Rotterdam.
+Dit model is ontwikkeld door de gemeente Rotterdam. Auteursrechten rusten geheel bij de gemeente Rotterdam.
 
-Deze repository is de gepubliceerde versie van het anonimiseringsscript, afgeleid van het origineel dat is ontwikkeld door de gemeente Rotterdam in samenwerking met Kyden, en uitgegeven onder de EUPL v1.2. Het voegt uitsluitend pre-publicatie hardening toe; zie [CHANGELOG.md](CHANGELOG.md) voor de wijzigingen.
+Deze repository is de gepubliceerde versie van het anonimiseringsscript, afgeleid van het origineel dat is ontwikkeld door de gemeente Rotterdam, en uitgegeven onder de EUPL v1.2. Het voegt uitsluitend pre-publicatie hardening toe; zie [CHANGELOG.md](CHANGELOG.md) voor de wijzigingen.
+
+> **Privacy-disclaimer.** Dit script anonimiseert tekst, maar het resultaat is niet gegarandeerd volledig en hangt mede af van de aangeboden informatie: er kan herleidbare informatie achterblijven. Of aanvullende controle nodig is, hangt af van de eisen die de toepassing stelt. Die afweging ligt bij de gebruikende organisatie.
 
 ## Inhoudsopgave
 
