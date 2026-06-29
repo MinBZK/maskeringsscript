@@ -11,6 +11,25 @@ golven doorgevoerd: **golf 1** op 2026-06-25 (BSN-lek, CLI-vlaggen, packaging,
 repo-URL, hygiëne) en **consolidatie + scoring-guard** op 2026-06-26. De item-codes
 (V01, V02, …) verwijzen naar de interne verbeteringen-prioriteitenmatrix.
 
+## [1.1.3] — 2026-06-29
+
+Derde golf: precisie van de Credit_Card-detectie verhoogd. Raakt de maskeer-output, dus
+geverifieerd via de regressie-harness (snapshot vóór/ná + recall-gate; geen regressie).
+
+### Gewijzigd
+- **Credit_Card met Luhn-validatie** (C1, V11). De Credit_Card-regex maskeerde elke reeks van
+  13–19 cijfers, waardoor bestel-/barcodenummers werden over-gemaskeerd. Een nieuwe
+  `is_valid_luhn`-guard maskeert nu alleen reeksen die de Luhn-checksum halen (zoals de
+  BSN-elfproef-guard); echte kaartnummers blijven gemaskeerd, willekeurige nummers niet meer.
+  Nieuwe parameter `validate_credit_card=True` op `RegexAnonymizer`. Recall onveranderd
+  (geen Credit_Card-recall-target geraakt); de snapshot-delta betreft uitsluitend de twee
+  bedoelde over-maskeringsgevallen. (`src/anonymizer/anonymizer.py`)
+
+### Verwijderd
+- **Verdwaald leeg bestand `77`** uit de repo-root (per ongeluk meegekomen in 1.1.2; repo-hygiëne).
+
+---
+
 ## [1.1.2] — 2026-06-29
 
 Tweede golf "legal/docs hardening": juridische en documentaire correcties zonder impact op
