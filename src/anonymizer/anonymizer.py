@@ -96,7 +96,7 @@ with translation_file.open("r", encoding="utf-8") as f:
 
 # Exported symbols
 __all__ = ["RegexAnonymizer", "ListAnonymizer", "NERAnonymizer", "CombinedAnonymizer", "TAGGED_PATTERNS", "__version__"]
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 
 # Logging setup
 LOGGER = logging.getLogger(__name__)
@@ -360,8 +360,44 @@ def is_valid_bsn(bsn: str) -> bool:
     
     # Apply 11-proef: multiply each digit by (9-i) for positions 0-7, subtract the last digit
     total = sum(int(d) * (9 - i) for i, d in enumerate(bsn_clean[:8])) - int(bsn_clean[8])
-    
+
     return total % 11 == 0
+
+
+def is_valid_luhn(number: str) -> bool:
+    """
+    Validate a number with the Luhn algorithm (used by credit-card numbers).
+
+    Parameters
+    ----------
+    number : str
+        Digit string (any separators must already be stripped).
+
+    Returns
+    -------
+    bool
+        True if *number* is 13-19 digits and passes the Luhn checksum.
+
+    Examples
+    --------
+    >>> is_valid_luhn("4539578763621486")   # Luhn-valid test card
+    True
+    >>> is_valid_luhn("1234567890123")      # 13-digit barcode, fails Luhn
+    False
+    """
+    if not number.isdigit() or not (13 <= len(number) <= 19):
+        return False
+
+    total = 0
+    for i, ch in enumerate(reversed(number)):
+        d = int(ch)
+        if i % 2 == 1:  # every second digit from the right is doubled
+            d *= 2
+            if d > 9:
+                d -= 9
+        total += d
+
+    return total % 10 == 0
 
 
 def _load_whitelist_excel(file_path: str, sheet_name: str) -> pd.DataFrame:
@@ -401,6 +437,8 @@ class RegexAnonymizer:
         ``<Email>``); customise if desired.
     validate_bsn : bool
         If True, apply 11-proef validation to BSN numbers (default: True).
+    validate_credit_card : bool
+        If True, apply Luhn validation to Credit_Card numbers (default: True).
     distinct_tags : bool | None
         If True, use distinct tag format. If None, use global DISTINCT_TAGS.
     """
@@ -410,11 +448,13 @@ class RegexAnonymizer:
         tags: Iterable[str] | None = None,
         mask: str = "<{tag}>",
         validate_bsn: bool = True,
+        validate_credit_card: bool = True,
         distinct_tags: bool | None = None,
     ) -> None:
         self._mask: str = mask
         self._patterns: Dict[str, Pattern] = _build_patterns(tags)
         self._validate_bsn: bool = validate_bsn
+        self._validate_credit_card: bool = validate_credit_card
         self._distinct_tags: bool = distinct_tags if distinct_tags is not None else DISTINCT_TAGS
         
         # Update mask format based on distinct_tags setting (only if using default mask)
@@ -442,6 +482,9 @@ class RegexAnonymizer:
             if tag == "BSN" and self._validate_bsn:
                 # Special handling for BSN: validate with 11-proef
                 text = self._anonymize_bsn(text, pat)
+            elif tag == "Credit_Card" and self._validate_credit_card:
+                # Special handling for Credit_Card: validate with Luhn checksum
+                text = self._anonymize_credit_card(text, pat)
             else:
                 text = pat.sub(self._mask.format(tag=TRANSLATIONS[TAG_LANGUAGE].get(tag, tag)), text)
 
@@ -498,8 +541,39 @@ class RegexAnonymizer:
             if is_valid_bsn(bsn):
                 return mask
             return bsn  # Keep original if invalid
-        
+
         return pattern.sub(replace_if_valid, text)
+
+    def _anonymize_credit_card(self, text: str, pattern: Pattern) -> str:
+        """
+        Replace credit-card-like numbers only if they pass the Luhn checksum.
+
+        The Credit_Card pattern matches any 13-19 digit run (optionally spaced or
+        hyphenated). Without a checksum this over-masks order/barcode numbers
+        (precision loss). Real card numbers satisfy Luhn, so requiring a valid Luhn
+        preserves recall while dropping those false positives.
+
+        Parameters
+        ----------
+        text : str
+            Input text containing potential credit-card numbers.
+        pattern : Pattern
+            Compiled regex pattern for Credit_Card matching.
+
+        Returns
+        -------
+        str
+            Text with Luhn-valid credit-card numbers replaced.
+        """
+        mask = self._mask.format(tag=TRANSLATIONS[TAG_LANGUAGE].get("Credit_Card", "Credit_Card"))
+
+        def replace_if_luhn(match: re.Match) -> str:
+            digits = re.sub(r"\D", "", match.group(0))
+            if is_valid_luhn(digits):
+                return mask
+            return match.group(0)  # Keep original if it fails Luhn
+
+        return pattern.sub(replace_if_luhn, text)
 
     # Makes the instance directly callable (handy for DataFrame.map)
     __call__ = anonymize
