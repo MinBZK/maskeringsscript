@@ -88,7 +88,6 @@ NER_CONFIDENCE_DICT = {
     "Address": 0.3,
     "Organization": 0.84
 }
-WEAK_NER_WHITELIST = [] # Loaded from Excel in NERAnonymizer
 
 translation_file = resources.files(config).joinpath("tag_translations.json")
 with translation_file.open("r", encoding="utf-8") as f:
@@ -123,6 +122,13 @@ _MONTHS = (
 # Every pattern is thoroughly commented with concrete variants it captures.   #
 # The negative‑lookbehind / look‑ahead guards ((?<!\w), (?!\w)) are used to  #
 # ensure word boundaries without consuming punctuation like € or ‑.           #
+#                                                                             #
+# ORDER CONTRACT: de invoegvolgorde is betekenisvol. _build_patterns()        #
+# behoudt die (dict-insertievolgorde, Python 3.7+) en anonymize() past de     #
+# patronen exact in deze volgorde toe, zodat specifiekere patronen vóór       #
+# bredere maskeren. Herorden entries NIET zonder de output opnieuw te         #
+# verifiëren; de characterization-snapshot in de regressie-harness bewaakt    #
+# dit.                                                                         #
 # --------------------------------------------------------------------------- #
 
 TAGGED_PATTERNS: Dict[str, str] = {
@@ -310,6 +316,9 @@ TAGGED_PATTERNS: Dict[str, str] = {
 def _build_patterns(active_tags: Iterable[str] | None = None) -> Dict[str, Pattern]:
     """
     Pre‑compile regexes for speed and maintainability.
+
+    Behoudt de TAGGED_PATTERNS-insertievolgorde (specificiteitscontract — zie de
+    TAGGED_PATTERNS-header); anonymize() steunt op deze volgorde.
     """
     tags = active_tags or TAGGED_PATTERNS.keys()
     
@@ -463,11 +472,14 @@ class RegexAnonymizer:
         elif mask == "<{tag}>" and not self._distinct_tags:
             self._mask = "<{tag}>"  # Uniform format
 
-        # Add the tags to the NER whitelist to avoid NER masking masks
-        tags_translated = [mask.format(tag=TRANSLATIONS[TAG_LANGUAGE].get(tag, tag)) for tag in self._patterns.keys()]
-        for tag_format in tags_translated:
-            if WEAK_NER_WHITELIST is not None and tag_format not in WEAK_NER_WHITELIST:
-                WEAK_NER_WHITELIST.append(tag_format)
+        # Expose this pass' output-tag formats as instance state (V13: geen module-globale
+        # mutatie meer). Een downstream NER-pass kan ze whitelisten zodat reeds geproduceerde
+        # tags niet opnieuw gemaskeerd worden; CombinedAnonymizer bedraadt dit.
+        self.weak_ner_tags: list[str] = []
+        for tag in self._patterns.keys():
+            tag_format = mask.format(tag=TRANSLATIONS[TAG_LANGUAGE].get(tag, tag))
+            if tag_format not in self.weak_ner_tags:
+                self.weak_ner_tags.append(tag_format)
 
     # --------------------------------------------------------------------- #
     # Public API                                                            #
@@ -491,8 +503,10 @@ class RegexAnonymizer:
         # Additional masking for ID numbers after indicators
         text = self._mask_additional_id_numbers(text)
 
-        # Post processing: mask numbers after postcode tags
-        text = re.sub(r'(\<Postcode\>)\s+(\d+[A-Za-z]?)\b', '<Postcode>', text)
+        # Post processing: mask numbers after postcode tags. Bouw de tag via
+        # TRANSLATIONS/mask i.p.v. een hardcoded '<Postcode>' (no-op voor nl/en).
+        postcode_tag = self._mask.format(tag=TRANSLATIONS[TAG_LANGUAGE].get("Postcode", "Postcode"))
+        text = re.sub(rf'({re.escape(postcode_tag)})\s+(\d+[A-Za-z]?)\b', postcode_tag, text)
         return text
     
     # Words to be checked for numbers right after them ('balie 12', 'sector 3A')
@@ -640,7 +654,10 @@ class ListAnonymizer:
         # Initialize a combined list for "Name"
         combined_name_list = []
         combined_name_case_sensitive = []
-        
+
+        # Output-tag formats of this pass, as instance state (V13: geen module-global).
+        self.weak_ner_tags: list[str] = []
+
         # Add each sheet in the input Excel as a list in the ListAnonymizer dictionary
         for sheet_name, df in List_Excel.items():
 
@@ -650,8 +667,8 @@ class ListAnonymizer:
             else:
                 sn_translated = TRANSLATIONS[TAG_LANGUAGE].get(sheet_name, sheet_name)
             tag_format = f"<({sn_translated})>" if self._distinct_tags else f"<{sn_translated}>"
-            if WEAK_NER_WHITELIST is not None and tag_format not in WEAK_NER_WHITELIST:
-                WEAK_NER_WHITELIST.append(tag_format)
+            if tag_format not in self.weak_ner_tags:
+                self.weak_ner_tags.append(tag_format)
 
             # Strip quotes from each item
             entries = [item.replace('"', '').replace("'", "") for item in df["List"].tolist()]
@@ -826,12 +843,15 @@ class ListAnonymizer:
             # Skip if this position is whitelisted (check with surrounding context)
             context_start = max(0, word_start - 20)
             context_end = min(len(text), word_end + 20)
+            # V19: hijs de context-slice + lower uit de per-item-lus (was n× herberekend).
+            context = text[context_start:context_end]
+            context_lower = context.lower()
             skip = False
             for wl_item in self.WHITELIST_LISTANONYMIZER:
-                if wl_item.lower() in text[context_start:context_end].lower():
+                if wl_item.lower() in context_lower:
                     # Check if current word is part of the whitelisted phrase
                     wl_pattern = r'\b' + re.escape(wl_item) + r'\b'
-                    for wl_match in re.finditer(wl_pattern, text[context_start:context_end], flags=re.IGNORECASE):
+                    for wl_match in re.finditer(wl_pattern, context, flags=re.IGNORECASE):
                         actual_start = context_start + wl_match.start()
                         actual_end = context_start + wl_match.end()
                         if actual_start <= word_start < actual_end:
@@ -891,7 +911,7 @@ class ListAnonymizer:
 # --------------------------------------------------------------------------- #
 
 class NERAnonymizer:
-    def __init__(self, model_name: str = "E3-JSI/gliner-multi-pii-domains-v1", distinct_tags: bool | None = None, print_confidence: bool | None = None):
+    def __init__(self, model_name: str = "E3-JSI/gliner-multi-pii-domains-v1", distinct_tags: bool | None = None, print_confidence: bool | None = None, extra_weak_whitelist: Iterable[str] | None = None):
         # Suppress transformers truncation warnings
         transformers_logging.set_verbosity_error()
         
@@ -916,11 +936,12 @@ class NERAnonymizer:
 
         self.whitelist_path = WHITELIST_PATH
         whitelist_ner = _load_whitelist_excel(self.whitelist_path, sheet_name="NER")
-        # Normalize and combine global and Excel weak whitelist entries (avoid .append return None)
+        # Normalize and combine the passed-in (regex/list pass) and Excel weak whitelist entries.
         weak_from_excel = [str(x).lower() for x in whitelist_ner["Weak"].dropna().tolist()]
         strong_from_excel = [str(x).lower() for x in whitelist_ner["Strong"].dropna().tolist()]
-        # Do not mutate the global constant; create instance attributes
-        existing_weak = [str(x).lower() for x in (WEAK_NER_WHITELIST or []) if pd.notna(x)]
+        # V13: tags van eerdere passes komen nu expliciet binnen via extra_weak_whitelist
+        # (door CombinedAnonymizer bedraad) i.p.v. via een module-globale lijst.
+        existing_weak = [str(x).lower() for x in (extra_weak_whitelist or []) if pd.notna(x)]
         self.WEAK_NER_WHITELIST = existing_weak + weak_from_excel
         self.STRONG_NER_WHITELIST = strong_from_excel
 
@@ -1031,7 +1052,13 @@ class CombinedAnonymizer:
         # Initialize all anonymizers
         self.regex_anonymizer = RegexAnonymizer(tags=regex_tags, mask=regex_mask, distinct_tags=distinct)
         self.list_anonymizer = ListAnonymizer(distinct_tags=distinct)
-        self.ner_anonymizer = NERAnonymizer(model_name=ner_model, distinct_tags=distinct, print_confidence=print_confidence)
+        # V13: geef de output-tags van de regex+lijst-passes expliciet door aan NER
+        # (geen module-globale brug meer), zodat NER ze niet opnieuw maskeert.
+        extra_weak = list(self.regex_anonymizer.weak_ner_tags)
+        for tag_format in self.list_anonymizer.weak_ner_tags:
+            if tag_format not in extra_weak:
+                extra_weak.append(tag_format)
+        self.ner_anonymizer = NERAnonymizer(model_name=ner_model, distinct_tags=distinct, print_confidence=print_confidence, extra_weak_whitelist=extra_weak)
         
     def anonymize(self, text: str) -> str:
         """
