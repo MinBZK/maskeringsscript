@@ -182,7 +182,7 @@ Uses regular expressions to detect fixed-pattern PII such as:
 - Dates and times: Date (26-02-2025, 2025-02-26), Date_Ext (3 april 2024, 21e van Januari)
 - Money amounts: Money (€216,62, Euro 8,50)
 - Numbers: Number (342,50, 1.234,56) - euro-style decimal format
-- Phone numbers: Phone (+31 6 12345678, 06-12345678, 088 12 24 44 00)
+- Phone numbers: Phone (+31 6 12345678, 06-12345678, +49 30 12345678, 088 12 24 44 00)
 - Email addresses: Email
 - URLs: URL (excluding rotterdam.nl domains)
 - Postal codes: Postcode (1234 AB)
@@ -751,7 +751,7 @@ Gebruikt reguliere expressies om PII met een vast patroon te detecteren, zoals:
 - Datums en tijden: Date (26-02-2025, 2025-02-26), Date_Ext (3 april 2024, 21e van Januari)
 - Geldbedragen: Money (€216,62, Euro 8,50)
 - Getallen: Number (342,50, 1.234,56) - decimaalnotatie in euro-stijl
-- Telefoonnummers: Phone (+31 6 12345678, 06-12345678, 088 12 24 44 00)
+- Telefoonnummers: Phone (+31 6 12345678, 06-12345678, +49 30 12345678, 088 12 24 44 00)
 - E-mailadressen: Email
 - URL's: URL (met uitzondering van rotterdam.nl-domeinen)
 - Postcodes: Postcode (1234 AB)

@@ -11,6 +11,29 @@ golven doorgevoerd: **golf 1** op 2026-06-25 (BSN-lek, CLI-vlaggen, packaging,
 repo-URL, hygiëne) en **consolidatie + scoring-guard** op 2026-06-26. De item-codes
 (V01, V02, …) verwijzen naar de interne verbeteringen-prioriteitenmatrix.
 
+## [1.1.6] — 2026-08-25
+
+Externe bijdrage (PR #7, snamrick). Output-rakend; geverifieerd via de regressie-harness
+tegen `main @ b1571e1` (snapshot 0 delta — het synthetische corpus bevat geen buitenlandse
+nummers; recall-gate OK, alle categorieën 1,00, residu-PII 0) en aanvullend in de volledige
+pijplijn op acht buitenlandse nummers.
+
+### Opgelost
+- **Buitenlandse telefoonnummers werden half gemaskeerd onder een verkeerde tag** (recall-lek).
+  Het `Phone`-patroon eiste `+31` of een leidende `0`. Een nummer met een andere landcode werd
+  daardoor niet als telefoonnummer herkend; een breder patroon verderop in de volgorde
+  (`ID_Number`, `KVK`) maskeerde alleen de losse cijferreeks en liet landcode plus netnummer
+  staan (`+49 30 12345678` → `+49 30 <KVK>`), of het nummer bleef volledig staan
+  (`+55 11 912345678`). Het patroon accepteert nu een generieke landcode van 1 tot en met 3
+  cijfers conform E.164; de cijferstructuur na de landcode en de insertievolgorde van
+  `TAGGED_PATTERNS` zijn ongewijzigd. Bewust geaccepteerd precisie-randje: een `+`-getal direct
+  gevolgd door 7–12 losse cijfers wordt nu als telefoonnummer gemaskeerd (was al deels
+  gemaskeerd als `ID_Number`). Bekend en buiten deze uitgave: de `(0)`- en `00`-notaties
+  (`+44 (0)20 …`, `0044 …`). (`src/anonymizer/anonymizer.py`)
+
+### Documentatie
+- README (EN + NL): buitenlands telefoonnummer toegevoegd aan de `Phone`-voorbeelden.
+
 ## [1.1.5] — 2026-07-21
 
 Golf 4, fase 2 (eerste item): sluit een recall-lek in de ondertekening van brieven.

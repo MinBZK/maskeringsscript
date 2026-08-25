@@ -95,7 +95,7 @@ with translation_file.open("r", encoding="utf-8") as f:
 
 # Exported symbols
 __all__ = ["RegexAnonymizer", "ListAnonymizer", "NERAnonymizer", "CombinedAnonymizer", "TAGGED_PATTERNS", "__version__"]
-__version__ = "1.1.5"
+__version__ = "1.1.6"
 
 # Logging setup
 LOGGER = logging.getLogger(__name__)
