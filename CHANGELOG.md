@@ -11,6 +11,25 @@ golven doorgevoerd: **golf 1** op 2026-06-25 (BSN-lek, CLI-vlaggen, packaging,
 repo-URL, hygiëne) en **consolidatie + scoring-guard** op 2026-06-26. De item-codes
 (V01, V02, …) verwijzen naar de interne verbeteringen-prioriteitenmatrix.
 
+## [1.1.7] — 2026-08-25
+
+Golf 4, fase 2 (tweede item, V28). Output-rakend in theorie; in de praktijk corpus-neutraal.
+Geverifieerd via de regressie-harness tegen `main @ 5d1faa5` (suite groen, snapshot 0 delta,
+recall-gate OK, alle categorieën 1,00, residu-PII 0) en aanvullend met het volledige corpus
+(952 teksten) door regex + lijst + NER: byte-identiek.
+
+### Opgelost
+- **NER-initialenregel matchte nooit op echte tags** (V28). De initialen-postprocessing in
+  `NERAnonymizer.anonymize` bouwde haar patroon op de vertaalde labelnaam (`"Naam"`) in plaats
+  van op het tagformaat (`"<Naam>"`). Daardoor bleven initialen naast een door NER gedetecteerde
+  naam staan (`Zwartendijk (K.L.)` → `<Naam> (K.L.)`), en kon formuliertekst als `Naam J.K. …`
+  stil initialen verliezen zonder tag. `ListAnonymizer` deed dezelfde regel al goed. De regel
+  gebruikt nu `name_tag_pattern` (het echte tagformaat, inclusief het optionele
+  confidence-achtervoegsel in distinct-tags-modus) en vervangt door `_get_tag_format("Name")`.
+  Bekend en bewust geaccepteerd: een hoofdletterafkorting direct naast een naam (`UWV`, `WMO`)
+  wordt nu ook bij NER-namen als initialen mee gemaskeerd — hetzelfde gedrag dat de lijst-pass
+  al had; aanscherpen in beide passes is een apart item (V32). (`src/anonymizer/anonymizer.py`)
+
 ## [1.1.6] — 2026-08-25
 
 Externe bijdrage (PR #7, snamrick). Output-rakend; geverifieerd via de regressie-harness
