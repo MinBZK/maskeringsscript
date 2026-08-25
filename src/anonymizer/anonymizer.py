@@ -256,9 +256,13 @@ TAGGED_PATTERNS: Dict[str, str] = {
         \b
     """,
 
-    # IBAN: NLkk BBBB CCCC CCCC CC  (spaces optional, bank code variable)
+    # IBAN: CCkk BBBB CCCC ...  (any ISO country code, spaces optional).
+    # Deliberately broad; mod-97 plus the registry length per country
+    # (_IBAN_LENGTHS) is the precision guard - the same construction
+    # Credit_Card uses with Luhn. Groups of four keep the spaced notation
+    # working without absorbing a following word one character at a time.
     "IBAN": r"""
-        \bNL\s?\d{2}\s?[A-Z]{4}\s?(?:\d{4}\s?){2}\d{2}\b
+        \b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){2,7}(?:\s?[A-Z0-9]{1,3})?\b
     """,
     
     # ------------------------------------------------------------------- #
@@ -433,6 +437,64 @@ def is_valid_luhn(number: str) -> bool:
     return total % 10 == 0
 
 
+# IBAN length per country, from the SWIFT IBAN registry. The length is part of the
+# validation: mod-97 alone accepts roughly one in 97 random strings, the length
+# check removes almost all of those before the checksum is even reached.
+_IBAN_LENGTHS: Dict[str, int] = {
+    "AD": 24, "AE": 23, "AL": 28, "AT": 20, "AZ": 28, "BA": 20, "BE": 16, "BG": 22,
+    "BH": 22, "BI": 27, "BR": 29, "BY": 28, "CH": 21, "CR": 22, "CY": 28, "CZ": 24,
+    "DE": 22, "DJ": 27, "DK": 18, "DO": 28, "EE": 20, "EG": 29, "ES": 24, "FI": 18,
+    "FO": 18, "FR": 27, "GB": 22, "GE": 22, "GI": 23, "GL": 18, "GR": 27, "GT": 28,
+    "HR": 21, "HU": 28, "IE": 22, "IL": 23, "IQ": 23, "IS": 26, "IT": 27, "JO": 30,
+    "KW": 30, "KZ": 20, "LB": 28, "LC": 32, "LI": 21, "LT": 20, "LU": 20, "LV": 21,
+    "LY": 25, "MC": 27, "MD": 24, "ME": 22, "MK": 19, "MR": 27, "MT": 31, "MU": 30,
+    "NL": 18, "NO": 15, "PK": 24, "PL": 28, "PS": 29, "PT": 25, "QA": 29, "RO": 24,
+    "RS": 22, "RU": 33, "SA": 24, "SC": 31, "SD": 18, "SE": 24, "SI": 19, "SK": 24,
+    "SM": 27, "SO": 23, "ST": 25, "SV": 28, "TL": 23, "TN": 24, "TR": 26, "UA": 29,
+    "VA": 22, "VG": 24, "XK": 20,
+    # Not in the SWIFT registry, but these countries do issue IBAN-format account
+    # numbers. Relevant for recall in a municipality with a large diaspora: they
+    # turn up on remittance slips, foreign payslips and benefit statements.
+    "AO": 25, "BF": 28, "BJ": 28, "CF": 27, "CG": 27, "CI": 28, "CM": 27,
+    "CV": 25, "DZ": 26, "GA": 27, "GQ": 27, "GW": 25, "HN": 28, "IR": 26,
+    "KM": 27, "MA": 28, "MG": 27, "ML": 28, "MZ": 25, "NE": 28, "NI": 32,
+    "SN": 28, "TD": 27, "TG": 28,
+}
+
+
+def is_valid_iban(iban: str) -> bool:
+    """
+    Validate an IBAN: known country code, registry length, and mod-97 checksum.
+
+    Parameters
+    ----------
+    iban : str
+        Candidate IBAN, with or without spaces, upper or lower case.
+
+    Returns
+    -------
+    bool
+        True if the country code is known, the length matches the registry entry
+        for that country, and the ISO 7064 mod-97 checksum is 1.
+
+    Examples
+    --------
+    >>> is_valid_iban("NL91 ABNA 0417 1643 00")   # ISO 13616 example
+    True
+    >>> is_valid_iban("NL91 ABNA 0417 1643 01")   # one digit changed
+    False
+    >>> is_valid_iban("NL123456789B01")           # VAT number, wrong length
+    False
+    """
+    compact = re.sub(r"\s", "", iban).upper()
+    if not re.fullmatch(r"[A-Z]{2}\d{2}[A-Z0-9]{11,30}", compact):
+        return False
+    if len(compact) != _IBAN_LENGTHS.get(compact[:2], -1):
+        return False
+    rearranged = compact[4:] + compact[:4]
+    return int("".join(str(int(c, 36)) for c in rearranged)) % 97 == 1
+
+
 def _load_whitelist_excel(file_path: str, sheet_name: str) -> pd.DataFrame:
     """Load the whitelist Excel file for the List and NER Anonymizer."""
     try:
@@ -472,6 +534,8 @@ class RegexAnonymizer:
         If True, apply 11-proef validation to BSN numbers (default: True).
     validate_credit_card : bool
         If True, apply Luhn validation to Credit_Card numbers (default: True).
+    validate_iban : bool
+        If True, apply mod-97 validation to IBAN numbers (default: True).
     distinct_tags : bool | None
         If True, use distinct tag format. If None, use global DISTINCT_TAGS.
     """
@@ -482,12 +546,14 @@ class RegexAnonymizer:
         mask: str = "<{tag}>",
         validate_bsn: bool = True,
         validate_credit_card: bool = True,
+        validate_iban: bool = True,
         distinct_tags: bool | None = None,
     ) -> None:
         self._mask: str = mask
         self._patterns: Dict[str, Pattern] = _build_patterns(tags)
         self._validate_bsn: bool = validate_bsn
         self._validate_credit_card: bool = validate_credit_card
+        self._validate_iban: bool = validate_iban
         self._distinct_tags: bool = distinct_tags if distinct_tags is not None else DISTINCT_TAGS
         
         # Update mask format based on distinct_tags setting (only if using default mask)
@@ -521,6 +587,9 @@ class RegexAnonymizer:
             elif tag == "Credit_Card" and self._validate_credit_card:
                 # Special handling for Credit_Card: validate with Luhn checksum
                 text = self._anonymize_credit_card(text, pat)
+            elif tag == "IBAN" and self._validate_iban:
+                # Special handling for IBAN: validate with mod-97 and length
+                text = self._anonymize_iban(text, pat)
             else:
                 text = pat.sub(self._mask.format(tag=TRANSLATIONS[TAG_LANGUAGE].get(tag, tag)), text)
 
@@ -601,6 +670,55 @@ class RegexAnonymizer:
             if is_valid_bsn(bsn):
                 return mask
             return bsn  # Keep original if invalid
+
+        return pattern.sub(replace_if_valid, text)
+
+    def _anonymize_iban(self, text: str, pattern: Pattern) -> str:
+        """
+        Replace IBAN-like strings only if they pass the mod-97 checksum.
+
+        The IBAN pattern accepts any ISO country code, so on its own it would also
+        match order references and VAT numbers. Requiring a known country code, the
+        registry length for that country and a valid mod-97 checksum keeps the
+        recall of the broad pattern without the false positives - the same trade-off
+        Credit_Card makes with Luhn. Rejected matches are left in place, so a later
+        pattern (BTW, Phone, ID_Number) can still claim them.
+
+        Parameters
+        ----------
+        text : str
+            Input text containing potential IBANs.
+        pattern : Pattern
+            Compiled regex pattern for IBAN matching.
+
+        Returns
+        -------
+        str
+            Text with checksum-valid IBANs replaced.
+        """
+        mask = self._mask.format(tag=TRANSLATIONS[TAG_LANGUAGE].get("IBAN", "IBAN"))
+
+        def replace_if_valid(match: re.Match) -> str:
+            matched = match.group(0)
+            if is_valid_iban(matched):
+                return mask
+            # The pattern is greedy in groups of four, so a following word can be
+            # absorbed ("BE68 5390 0754 7034 graag"). The country code dictates the
+            # registry length: cut the match there and retry, so a valid IBAN is not
+            # left unmasked. Only the account part is masked, the tail is kept.
+            expected = _IBAN_LENGTHS.get(matched[:2].upper())
+            if expected:
+                seen = 0
+                for i, ch in enumerate(matched):
+                    if ch.isspace():
+                        continue
+                    seen += 1
+                    if seen == expected:
+                        head = matched[: i + 1]
+                        if is_valid_iban(head):
+                            return mask + matched[i + 1 :]
+                        break
+            return matched  # Keep original if it fails the checksum
 
         return pattern.sub(replace_if_valid, text)
 
