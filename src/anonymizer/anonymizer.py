@@ -116,6 +116,39 @@ _MONTHS = (
     r"november|december|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec"
 )
 
+# Dutch licence-plate layouts (V17). Defined once and used twice in the Licence_Plate
+# pattern: hyphen-separated layouts are matched case-insensitively (users type
+# "ab-12-34"), while space-separated and separator-less layouts require UPPERCASE
+# letters -- otherwise two-letter words followed by a number ("in de 30", "ze is 84")
+# and lower-case product codes ("ab1234") are masked as licence plates.
+_PLATE_SEP = r"""
+            (?:[A-Z]{2}[\-\s]\d{2}[\-\s]\d{2})|         # AA-12-34
+            (?:\d{2}[\-\s][A-Z]{2}[\-\s]\d{2})|         # 12-AB-34
+            (?:\d{2}[\-\s]\d{2}[\-\s][A-Z]{2})|         # 12-34-AB
+            (?:[A-Z]{2}[\-\s]\d{2}[\-\s][A-Z]{2})|      # AA-12-BC
+            (?:[A-Z]{2}[\-\s][A-Z]{2}[\-\s]\d{2})|      # AA-BB-12
+            (?:\d{2}[\-\s][A-Z]{2}[\-\s][A-Z]{2})|      # 12-AB-BB
+            (?:[A-Z]{2}[\-\s]\d{3}[\-\s][A-Z])|         # AA-123-B
+            (?:[A-Z]{3}[\-\s]\d{2}[\-\s][A-Z]{1})|      # AAA-12-B
+            (?:[A-Z][\-\s]\d{3}[\-\s][A-Z]{2})|         # A-123-BB
+            (?:\d[\-\s][A-Z]{3}[\-\s]\d{2})|            # 1-ABC-12
+            (?:\d{2}[\-\s][A-Z]{3}[\-\s]\d)|            # 12-ABC-1
+            (?:[A-Z]{2}[\-\s][A-Z]{2}[\-\s]\d{4})       # AA-BB-1234 (German licence plate observed in sample)
+"""
+_PLATE_NOSEP = r"""
+            (?:[A-Z]{2}\d{2}\d{2})|                     # AA1234
+            (?:\d{2}[A-Z]{2}\d{2})|                     # 12AB34
+            (?:\d{2}\d{2}[A-Z]{2})|                     # 1234AB
+            (?:[A-Z]{2}\d{2}[A-Z]{2})|                  # AA12AB
+            (?:[A-Z]{2}[A-Z]{2}\d{2})|                  # AAAB12
+            (?:[A-Z]{3}\d{2}[A-Z]{1})|                  # AAA12B
+            (?:\d{2}[A-Z]{2}[A-Z]{2})|                  # 12ABAB
+            (?:[A-Z]{2}\d{3}[A-Z])|                     # AA123B
+            (?:[A-Z]\d{3}[A-Z]{2})|                     # A123BB
+            (?:\d[A-Z]{3}\d{2})|                        # 1ABC12
+            (?:\d{2}[A-Z]{3}\d)                         # 12ABC1
+"""
+
 # --------------------------------------------------------------------------- #
 # TAGGED_PATTERNS – order matters (high‑specificity → low‑specificity)       #
 # --------------------------------------------------------------------------- #
@@ -237,33 +270,14 @@ TAGGED_PATTERNS: Dict[str, str] = {
     """,
 
     # Dutch vehicle licence plates
-    "Licence_Plate": r"""
+    "Licence_Plate": rf"""
         (?<!\w)(?:
-            # — variants WITH separators (‑ or space) —
-            (?:[A-Z]{2}[\-\s]\d{2}[\-\s]\d{2})|         # AA-12-34
-            (?:\d{2}[\-\s][A-Z]{2}[\-\s]\d{2})|         # 12-AB-34
-            (?:\d{2}[\-\s]\d{2}[\-\s][A-Z]{2})|         # 12-34-AB
-            (?:[A-Z]{2}[\-\s]\d{2}[\-\s][A-Z]{2})|      # AA-12-BC
-            (?:[A-Z]{2}[\-\s][A-Z]{2}[\-\s]\d{2})|      # AA-BB-12
-            (?:\d{2}[\-\s][A-Z]{2}[\-\s][A-Z]{2})|      # 12-AB-BB
-            (?:[A-Z]{2}[\-\s]\d{3}[\-\s][A-Z])|         # AA-123-B
-            (?:[A-Z]{3}[\-\s]\d{2}[\-\s][A-Z]{1})|      # AAA-12-B
-            (?:[A-Z][\-\s]\d{3}[\-\s][A-Z]{2})|         # A-123-BB
-            (?:\d[\-\s][A-Z]{3}[\-\s]\d{2})|            # 1-ABC-12
-            (?:\d{2}[\-\s][A-Z]{3}[\-\s]\d)|            # 12-ABC-1
-            (?:[A-Z]{2}[\-\s][A-Z]{2}[\-\s]\d{4})|      # Added for AA-BB-1234 (German licence plate observed in sample)
-            # — SAME layouts but NO separators (length 6‑7, letters+digits)
-            (?:[A-Z]{2}\d{2}\d{2})|                     # AA1234
-            (?:\d{2}[A-Z]{2}\d{2})|                     # 12AB34
-            (?:\d{2}\d{2}[A-Z]{2})|                     # 1234AB
-            (?:[A-Z]{2}\d{2}[A-Z]{2})|                  # AA12AB
-            (?:[A-Z]{2}[A-Z]{2}\d{2})|                  # AAAB12
-            (?:[A-Z]{3}\d{2}[A-Z]{1})|                  # AAA12B
-            (?:\d{2}[A-Z]{2}[A-Z]{2})|                  # 12ABAB
-            (?:[A-Z]{2}\d{3}[A-Z])|                     # AA123B
-            (?:[A-Z]\d{3}[A-Z]{2})|                     # A123BB
-            (?:\d[A-Z]{3}\d{2})|                        # 1ABC12
-            (?:\d{2}[A-Z]{3}\d)                         # 12ABC1
+            # hyphen-separated: case-insensitive (users type "ab-12-34")
+            (?=[A-Za-z0-9]{{1,3}}-)(?:{_PLATE_SEP})
+            |
+            # space-separated or no separator: UPPERCASE only (V17), otherwise
+            # "in de 30", "ze is 84" and product codes such as "ab1234" match
+            (?-i:(?:{_PLATE_SEP})|(?:{_PLATE_NOSEP}))
         )(?!\w)
     """,
 
@@ -307,7 +321,18 @@ TAGGED_PATTERNS: Dict[str, str] = {
     # MISCELLANEOUS                                                      #
     # ------------------------------------------------------------------- #
     "IP_Address": r"\b(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}\b",  # 192.168.1.1
-    "Credit_Card": r"\b(?:\d[\s-]?){13,19}\b",    # 16‑digit Visa etc.
+    # Credit_Card (V27): explicit card groupings instead of a greedy run of 13-19 digits
+    # with optional separators. The greedy form absorbed an adjacent separate digit
+    # ("4539 5787 6362 1486 2"), so the Luhn check failed and a real card stayed
+    # unmasked; it also swallowed the trailing space. Luhn validation still applies.
+    "Credit_Card": r"""
+        \b(?:
+            \d{4}(?:[ -]?\d{4}){3}(?:[ -]?\d{3})?   # 16 digits in four groups (Visa/Mastercard), or 19 as 4-4-4-4-3 (Maestro)
+          | \d{4}[ -]?\d{6}[ -]?\d{5}               # 15 digits, 4-6-5 (American Express)
+          | \d{4}[ -]?\d{6}[ -]?\d{4}               # 14 digits, 4-6-4 (Diners Club)
+          | \d{13,19}                               # 13-19 contiguous digits
+        )\b
+    """,
 
 }
 
@@ -603,10 +628,16 @@ class RegexAnonymizer:
         mask = self._mask.format(tag=TRANSLATIONS[TAG_LANGUAGE].get("Credit_Card", "Credit_Card"))
 
         def replace_if_luhn(match: re.Match) -> str:
-            digits = re.sub(r"\D", "", match.group(0))
-            if is_valid_luhn(digits):
+            matched = match.group(0)
+            if is_valid_luhn(re.sub(r"\D", "", matched)):
                 return mask
-            return match.group(0)  # Keep original if it fails Luhn
+            # A trailing short group ("... 1486 123") may be a separate token that the
+            # pattern absorbed; retry without it so a valid card before it is not left
+            # unmasked (V27). Only the card part is masked, the tail is kept.
+            head = re.match(r"(.*\d)[ -]\d{1,3}$", matched)
+            if head and is_valid_luhn(re.sub(r"\D", "", head.group(1))):
+                return mask + matched[len(head.group(1)):]
+            return matched  # Keep original if it fails Luhn
 
         return pattern.sub(replace_if_luhn, text)
 
