@@ -1025,9 +1025,11 @@ class NERAnonymizer:
         name_tag_pattern = rf'<\[{name_tag}(?:, C[\d.]+)?\]>' if self._distinct_tags else rf'<{name_tag}>'
         text = re.sub(name_tag_pattern + r'\s+' + name_tag_pattern, self._get_tag_format("Name"), text)
 
-        # Post-process: check for initials before and after a name
-        name_pattern_init = r'\b([A-Z]\.?)+[-\s\(\),]*' + re.escape(name_tag) + '|' + re.escape(name_tag) + r'[-\s\(\),]*([A-Z]\.?){2,}'
-        text = re.sub(name_pattern_init, name_tag, text)
+        # Post-process: check for initials before and after a name. Match on the actual
+        # tag format (name_tag_pattern, incl. the optional confidence suffix in distinct-tags
+        # mode) and replace with the tag, not with the bare label name (V28).
+        name_pattern_init = r'\b([A-Z]\.?)+[-\s\(\),]*' + name_tag_pattern + '|' + name_tag_pattern + r'[-\s\(\),]*([A-Z]\.?){2,}'
+        text = re.sub(name_pattern_init, self._get_tag_format("Name"), text)
         
         return text
     
