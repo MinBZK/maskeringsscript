@@ -264,9 +264,29 @@ TAGGED_PATTERNS: Dict[str, str] = {
     # ------------------------------------------------------------------- #
     # POSTAL / LICENCE                                                   #
     # ------------------------------------------------------------------- #
-    # Dutch postal code
+    # Dutch postal code. Uppercase keeps matching exactly as before. Lowercase is
+    # now allowed too - citizens write "1234 ab" - but only when the two letters do
+    # not form a common Dutch two-letter word, unit or abbreviation, otherwise
+    # "sinds 1998 en", "1600 cc" and "2005 cv" would be masked as postal codes.
+    # Words of three letters or more ("3000 uur") are already excluded by
+    # the trailing word boundary.
+    # The (?-i:) groups keep both branches case-sensitive regardless of the flags
+    # _build_patterns passes, so the guard cannot silently start blocking genuine
+    # uppercase codes like "5701 EN" if Postcode is ever dropped from
+    # case_sensitive_tags.
     "Postcode": r"""
-        \b[1-9]\d{3}\s?[A-Z]{2}\b                     # 1234 AB
+        \b[1-9]\d{3}\s?(?:
+            (?-i:[A-Z]{2})                        # 1234 AB
+            |
+            (?!(?-i:                              # not a Dutch two-letter word
+                 en|op|in|is|te|om|af|of|na|er|ze|we|je|ik|uw|de|ge|me|al|as
+                 |nu|zo|to|be|do|ex|ja|ho|nl|eu
+                                                  # ... nor a unit/abbreviation
+                 |km|kg|mg|gr|ml|cl|dl|hl|cm|mm|dm|kb|mb|gb|tb|db|hz|pt|px
+                 |st|ha|kw|pk|cc|cv|tv|wc|pc|cd
+               )\b)
+            [A-Za-z]{2}                           # 1234 ab
+        )\b
     """,
 
     # Dutch vehicle licence plates
