@@ -11,6 +11,23 @@ golven doorgevoerd: **golf 1** op 2026-06-25 (BSN-lek, CLI-vlaggen, packaging,
 repo-URL, hygiëne) en **consolidatie + scoring-guard** op 2026-06-26. De item-codes
 (V01, V02, …) verwijzen naar de interne verbeteringen-prioriteitenmatrix.
 
+## [1.1.9] — 2026-08-25
+
+Golf 4, fase 2 (vierde item, V31; vervolg op 1.1.6). Output-rakend (recall); geverifieerd via de
+regressie-harness tegen `main @ 25ba47a` (suite groen, snapshot 0 delta — het corpus bevat geen
+`(0)`/`00`-notaties; recall-gate OK, alle categorieën 1,00, residu-PII 0) en 20 gerichte zinnen.
+
+### Opgelost
+- **Telefoonnummers in `(0)`- en `00`-notatie werden niet of half gemaskeerd** (V31, recall-lek).
+  Het `Phone`-patroon herkende een landcode alleen met `+` en kende de `(0)`-notatie voor het
+  netnummer niet. `+31 (0)10 267 1234` (gangbare Nederlandse briefhoofd-notatie) en
+  `+44 (0)20 7946 0958` bleven volledig staan, `+31(0)6 12345678` werd half gemaskeerd als `<KVK>`,
+  en `0044 20 7946 0958` liet een restant `0958` achter. De prefix-groep accepteert nu ook `00`
+  gevolgd door een landcode en een optionele `(0)` direct na de landcode (met of zonder spatie):
+  `(?:\+\d{1,3}|0)` → `(?:(?:\+\d{1,3}|00\d{1,3})(?:\s?\(0\))?|0)`. De eis van 7–12 cijfers na de
+  prefix, de negatieven (`Score 0012 punten`, `Temperatuur (0) graden`, `huisnummer 00 12`) en de
+  insertievolgorde van `TAGGED_PATTERNS` zijn ongewijzigd. (`src/anonymizer/anonymizer.py`)
+
 ## [1.1.8] — 2026-08-25
 
 Golf 4, fase 2 (derde item, V32). Output-rakend (precisie); corpus-neutraal. Geverifieerd via de
