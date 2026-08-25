@@ -95,7 +95,7 @@ with translation_file.open("r", encoding="utf-8") as f:
 
 # Exported symbols
 __all__ = ["RegexAnonymizer", "ListAnonymizer", "NERAnonymizer", "CombinedAnonymizer", "TAGGED_PATTERNS", "__version__"]
-__version__ = "1.1.10"
+__version__ = "1.1.11"
 
 # Logging setup
 LOGGER = logging.getLogger(__name__)
@@ -688,6 +688,10 @@ class ListAnonymizer:
         self.case_sensitive_dict = {}  # Store case sensitivity per entry
         self._distinct_tags: bool = distinct_tags if distinct_tags is not None else DISTINCT_TAGS
         self.tussenvoegsels = {"van", "der", "den", "de", "ten", "ter"} # Common Dutch "tussenvoegsels", names containing these will be treated as case-insensitive
+        # SymSpell fuzzy matching is limited to capitalised words and to the Name/Address lists
+        # (V14): on ordinary lower-case words and the nationality list it produced false
+        # positives ("stellen" -> "stelle", "nederlands" -> "nederlandse") that destroyed text.
+        self._fuzzy_tags = {"Name", "Address"}
 
         # --- SymSpell Initialization ---
         # max_dictionary_edit_distance: How many deletions to pre-calculate.
@@ -742,7 +746,9 @@ class ListAnonymizer:
                             # Entry might already exist from another list (e.g., a name that is also a street)
                             # We prioritize the first tag found.
                             pass
-                        self.word_to_tag_map[lower_entry] = sheet_name
+                        # First/Last Name entries map to the output tag "Name" (V14); storing the
+                        # sheet name here produced an untranslated "<Last Name>" tag on fuzzy hits.
+                        self.word_to_tag_map[lower_entry] = "Name" if sheet_name in ["First Name", "Last Name"] else sheet_name
             # ---
 
             if sheet_name in ["First Name", "Last Name"]:
@@ -875,7 +881,7 @@ class ListAnonymizer:
 
         # Apply Symspell fuzzy match
         words = text.split()
-        replacements = []  # Store (original_word, replacement, position) tuples
+        replacements = []  # Store (core_position, core_length, replacement) tuples
         current_pos = 0
         
         for i, word in enumerate(words):
@@ -915,29 +921,38 @@ class ListAnonymizer:
             if skip:
                 continue
 
-            # Clean the word by removing punctuation
-            word_stripped = word.replace(',', '').replace('.', '').replace("'", '').replace('"', '')
+            # Isolate the word core: strip punctuation from both ends only, and remember
+            # where the core sits, so that surrounding punctuation ("Beukenhof," / "(Jansen)")
+            # survives the replacement (V14).
+            core_start = 0
+            core_end = len(word)
+            while core_start < core_end and not word[core_start].isalnum():
+                core_start += 1
+            while core_end > core_start and not word[core_end - 1].isalnum():
+                core_end -= 1
+            word_core = word[core_start:core_end]
 
-            # Fuzzy Match for single, case-insensitive words (if no exact match was found)
-            # Only apply to words longer than 6 characters to avoid false positives.
-            if len(word_stripped) > 6 and SYMSPELL:
+            # Fuzzy match for single words (if no exact match was found). Only for words
+            # longer than 6 characters that start with a capital (names, streets), and only
+            # against the Name/Address lists (V14): lower-case words and the nationality list
+            # gave false positives on ordinary words.
+            if len(word_core) > 6 and word_core[0].isupper() and SYMSPELL:
                 # max_edit_distance: 1 for fewer false positives, 2 for more recall.
                 # Verbosity.TOP: returns the best match.
                 suggestions = self.symspell.lookup(
-                    word_stripped.lower(), Verbosity.TOP, max_edit_distance=1, include_unknown=False
+                    word_core.lower(), Verbosity.TOP, max_edit_distance=1, include_unknown=False
                 )
                 if suggestions:
                     best_suggestion = suggestions[0].term
                     # Find the original tag for this suggested word
-                    if best_suggestion in self.word_to_tag_map:
-                        tag = self.word_to_tag_map[best_suggestion]
+                    tag = self.word_to_tag_map.get(best_suggestion)
+                    if tag in self._fuzzy_tags:
                         tag_format = self._get_tag_format(tag)
-                        replacements.append((word, tag_format, word_start))
+                        replacements.append((word_start + core_start, len(word_core), tag_format))
 
-        
-        # Apply replacements from right to left to preserve positions
-        for original, replacement, pos in sorted(replacements, key=lambda x: x[2], reverse=True):
-            text = text[:pos] + text[pos:].replace(original, replacement, 1)
+        # Apply replacements from right to left by position, replacing only the word core.
+        for pos, length, replacement in sorted(replacements, key=lambda x: x[0], reverse=True):
+            text = text[:pos] + replacement + text[pos + length:]
         
         # Merge consecutive <(Name)> tags into one
         name_tag = self._get_tag_format("Name")

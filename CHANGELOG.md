@@ -11,6 +11,35 @@ golven doorgevoerd: **golf 1** op 2026-06-25 (BSN-lek, CLI-vlaggen, packaging,
 repo-URL, hygiëne) en **consolidatie + scoring-guard** op 2026-06-26. De item-codes
 (V01, V02, …) verwijzen naar de interne verbeteringen-prioriteitenmatrix.
 
+## [1.1.11] — 2026-08-25
+
+Golf 4, fase 2 (zesde en laatste item, V14). Output-rakend (precisie + leestekens); geverifieerd
+via de regressie-harness tegen `main @ 197c72a` (suite groen, snapshot 0 delta — regex-laag
+ongewijzigd; recall-gate OK, alle categorieën 1,00, residu-PII 0), het volledige corpus (952
+teksten) door regex + lijst + NER (14 records verschillend: 12 bedoelde herstellingen en 2
+NER-contextbijeffecten, over-maskering zonder lek), 19 gerichte zinnen en een nieuwe
+red→green-regressiewachter. Hiermee is golf 4 fase 2 afgerond.
+
+### Gewijzigd
+- **SymSpell-fuzzy-vervanging: leestekens behouden, alleen hoofdletterwoorden tegen de Naam- en
+  Adres-lijsten** (V14). De fuzzy-tak in `ListAnonymizer.anonymize` verving het hele token
+  inclusief leesteken door de tag (`Beukenhof, je ziet` → `<Adres> je ziet`), stripte haakjes en
+  dubbele punt niet (waardoor `(Bootink)` en `Bootink:` niet werden gematcht) en vuurde op gewone
+  woorden: in het synthetische corpus waren 13 van de 15 fuzzy-treffers vals (`stellen` → *stelle*
+  → `<Adres>`, `zending` → *pending*, `weiland` → *meiland*, `spanning` → *spanninga*, `nederlands`
+  → *nederlandse* → `<Nationaliteit>`), met tekstverlies. Nu wordt alleen de woordkern (leestekens
+  aan begin en eind gestript) op positie vervangen, en geldt fuzzy matching alleen voor woorden
+  met een hoofdletter en alleen tegen de Naam- en Adres-lijsten. De exacte matching is
+  ongewijzigd en blijft hoofdletter-ongevoelig. Bewust: kleingeschreven of korte typo-namen
+  verliezen fuzzy-dekking in de lijst-pass (NER vangt die in de volledige pijplijn).
+  (`src/anonymizer/anonymizer.py`)
+
+### Opgelost
+- **Fuzzy naamtreffers kregen de tag `<Last Name>`/`<First Name>`** i.p.v. `<Naam>` (V14).
+  `word_to_tag_map` sloeg de sheetnaam op in plaats van de uitvoertag; de tag was onvertaald en
+  onbekend bij de NER-whitelist. First/Last Name-entries registreren nu de tag `Name`.
+  (`src/anonymizer/anonymizer.py`)
+
 ## [1.1.10] — 2026-08-25
 
 Golf 4, fase 2 (vijfde item: V17 + V27). Output-rakend; geverifieerd via de regressie-harness
