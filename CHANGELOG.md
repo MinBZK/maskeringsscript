@@ -11,6 +11,25 @@ golven doorgevoerd: **golf 1** op 2026-06-25 (BSN-lek, CLI-vlaggen, packaging,
 repo-URL, hygiëne) en **consolidatie + scoring-guard** op 2026-06-26. De item-codes
 (V01, V02, …) verwijzen naar de interne verbeteringen-prioriteitenmatrix.
 
+## [1.1.8] — 2026-08-25
+
+Golf 4, fase 2 (derde item, V32). Output-rakend (precisie); corpus-neutraal. Geverifieerd via de
+regressie-harness tegen `main @ 983f32b` (suite groen, snapshot 0 delta, recall-gate OK, alle
+categorieën 1,00, residu-PII 0), het volledige corpus (952 teksten) door regex + lijst + NER
+(byte-identiek) en 18 gerichte zinnen per pass.
+
+### Gewijzigd
+- **Initialen-ná-naam-regel slokte hoofdletterafkortingen op** (V32, over-maskering). De
+  initialen-postprocessing in `ListAnonymizer` en `NERAnonymizer` maskeerde na een naam-tag elke
+  reeks van twee of meer hoofdletters mee, waardoor een afkorting direct naast een naam verdween:
+  `Jansen (WW)` → `<Naam>)`, `Bakker UWV-consulent` → `<Naam>-consulent`, `Visser BV` → `<Naam>`.
+  Het ná-de-naam-alternatief eist nu echte initialen — minimaal twee letters, alle behalve de
+  laatste met punt — zodat `A.B.`, `K.L.` en `A.B` nog steeds worden mee gemaskeerd, maar `WW`,
+  `UWV`, `AOW`, `BV` en `WMO` blijven staan. Beide passes tegelijk aangepast (consistentie); het
+  vóór-de-naam-alternatief is ongewijzigd. Bekend: hoofdletters zonder punt na een naam (`Bakker
+  AB`) laat de lijst-pass nu staan; in de volledige pijplijn vangt NER die alsnog.
+  (`src/anonymizer/anonymizer.py`)
+
 ## [1.1.7] — 2026-08-25
 
 Golf 4, fase 2 (tweede item, V28). Output-rakend in theorie; in de praktijk corpus-neutraal.
