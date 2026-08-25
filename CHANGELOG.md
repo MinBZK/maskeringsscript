@@ -11,6 +11,38 @@ golven doorgevoerd: **golf 1** op 2026-06-25 (BSN-lek, CLI-vlaggen, packaging,
 repo-URL, hygiëne) en **consolidatie + scoring-guard** op 2026-06-26. De item-codes
 (V01, V02, …) verwijzen naar de interne verbeteringen-prioriteitenmatrix.
 
+## [1.1.10] — 2026-08-25
+
+Golf 4, fase 2 (vijfde item: V17 + V27). Output-rakend; geverifieerd via de regressie-harness
+tegen `main @ ea71be0` (recall-gate OK, alle categorieën 1,00, residu-PII 0; regex-snapshot 7
+records verschillend, alle 7 gereviewd — uitsluitend herstelde tekst, geen echt kenteken geraakt),
+37 gerichte zinnen en een nieuwe red→green-regressiewachter in de harness.
+
+### Gewijzigd
+- **Kentekenpatroon maskeerde gewone woorden** (V17, over-maskering). `Licence_Plate` stond spatie
+  toe als scheidingsteken en draaide hoofdletter-ongevoelig, waardoor twee tweeletterwoorden plus
+  een getal als kenteken werden gemaskeerd: `in de 30-zone` → `<Kenteken>-zone`, `ze is 84`,
+  `op na 16.30`, `artikel 12 Sv of`. In het synthetische corpus waren 7 van de 8 kenteken-matches
+  vals; ook kleine-letter-productcodes (`ab1234`, `12ab34`) werden gemaskeerd. De lay-outs staan
+  nu één keer (`_PLATE_SEP` / `_PLATE_NOSEP`) en worden twee keer gebruikt: streepjes-gescheiden
+  kentekens blijven hoofdletter-ongevoelig (`ab-12-34`), spatie-gescheiden en aaneengeschreven
+  kentekens vereisen hoofdletters. Alle echte kentekens (`AB-12-34`, `12-ABC-1`, `AB 12 34`,
+  `AB1234`, `12ABC1`, `AB-CD-1234`) blijven gemaskeerd. Het `Number`-patroon is bewust
+  ongewijzigd gelaten (beleidskeuze welke bedragen herleidbaar zijn, geen bug).
+  (`src/anonymizer/anonymizer.py`)
+
+### Opgelost
+- **Creditcard naast een los cijfer bleef ongemaskeerd** (V27, recall-lek). De greedy reeks
+  `\b(?:\d[\s-]?){13,19}\b` slokte een aangrenzend cijfer op (`4539 5787 6362 1486 2`),
+  waardoor de Luhn-controle op 17 cijfers faalde en de kaart volledig bleef staan; ook werd de
+  spatie na een kaart opgegeten (`<Credit_Card>gebruikt`). Het patroon kent nu expliciete
+  groeperingen (4-4-4-4 met optionele 3-cijferstaart, 4-6-5, 4-6-4, 13–19 aaneengesloten) en de
+  Luhn-callback controleert bij een opgeslokte staartgroep het kaartdeel apart. De
+  Luhn-validatie uit 1.1.3 blijft de wachter: `1234567890123` en `1234 5678 9012 345` blijven
+  ongemaskeerd. Bekend en buiten deze uitgave: gegroepeerde Amex/Diners/Maestro worden door
+  `ID_Number`/`Phone` opgevangen vóór `Credit_Card` (order-contract); 17+ aaneengesloten cijfers
+  zonder groepering blijven ongemaskeerd. (`src/anonymizer/anonymizer.py`)
+
 ## [1.1.9] — 2026-08-25
 
 Golf 4, fase 2 (vierde item, V31; vervolg op 1.1.6). Output-rakend (recall); geverifieerd via de
