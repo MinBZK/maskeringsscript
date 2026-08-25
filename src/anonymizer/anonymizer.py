@@ -913,8 +913,10 @@ class ListAnonymizer:
         name_pattern = re.escape(name_tag) + r'\s+' + re.escape(name_tag)
         text = re.sub(name_pattern, name_tag, text)
 
-        # Check for initials before and after a name
-        name_pattern_init = r'\b([A-Z]\.?)+[-\s\(\),]*' + re.escape(name_tag) + '|' + re.escape(name_tag) + r'[-\s\(\),]*([A-Z]\.?){2,}'
+        # Check for initials before and after a name. After the name, require real
+        # dotted initials (at least two letters, all but the last with a dot) so that
+        # capitalised abbreviations next to a name (UWV, WMO, WW) are not swallowed (V32).
+        name_pattern_init = r'\b([A-Z]\.?)+[-\s\(\),]*' + re.escape(name_tag) + '|' + re.escape(name_tag) + r'[-\s\(\),]*(?:[A-Z]\.)+[A-Z]\.?'
         text = re.sub(name_pattern_init, name_tag, text)
 
         # Check for house numbers after or before an address tags
@@ -1027,8 +1029,9 @@ class NERAnonymizer:
 
         # Post-process: check for initials before and after a name. Match on the actual
         # tag format (name_tag_pattern, incl. the optional confidence suffix in distinct-tags
-        # mode) and replace with the tag, not with the bare label name (V28).
-        name_pattern_init = r'\b([A-Z]\.?)+[-\s\(\),]*' + name_tag_pattern + '|' + name_tag_pattern + r'[-\s\(\),]*([A-Z]\.?){2,}'
+        # mode) and replace with the tag, not with the bare label name (V28). After the
+        # name, require real dotted initials, as in ListAnonymizer (V32).
+        name_pattern_init = r'\b([A-Z]\.?)+[-\s\(\),]*' + name_tag_pattern + '|' + name_tag_pattern + r'[-\s\(\),]*(?:[A-Z]\.)+[A-Z]\.?'
         text = re.sub(name_pattern_init, self._get_tag_format("Name"), text)
         
         return text
