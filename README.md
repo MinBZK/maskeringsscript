@@ -343,8 +343,8 @@ The List Anonymizer uses an Excel file (`src/anonymizer/input_files/ListClassifi
 
 ### Current lists include:
 
-- First Name: Common first names
-- Last Name: Common surnames
+- First Name: Common first names (examples in the Basic file, to be supplemented by users for their own population)
+- Last Name: Common surnames (examples in the Basic file, to be supplemented by users for their own population)
 - Address: Street names and locations
 - Nationalities: All nationalities in Dutch and English
 - Organisation: Names of organisations (just a few examples in the Basic file, to be filled by users if desired)
@@ -373,7 +373,7 @@ The List Anonymizer uses an Excel file (`src/anonymizer/input_files/ListClassifi
 - Add a "Case Sensitive" column (column B) with values 0 or 1
 - 0 (or blank): Case-insensitive matching
 - 1: Case-sensitive matching
-- For multi-word entries with "tussenvoegsels" (van, der, de, etc.), these connecting words are always case-insensitive
+- Exception for names: in the "First Name" and "Last Name" sheets, an entry containing a "tussenvoegsel" (van, der, den, de, ten, ter) is always matched case-insensitively as a whole, regardless of column B. "De Lange" therefore also matches "de lange" in running text. This applies to the combined Name tag (First Name plus Last Name) only; entries in other sheets follow column B
 
 **Note**: First Name and Last Name sheets are automatically combined into a single "Name" tag to improve detection of full names.
 
@@ -467,11 +467,14 @@ CA = anonymizer.CombinedAnonymizer()
 - Add your organisation name to prevent it from being masked
 - Update or remove other organisation names depending on your needs
 
-### 5. Adjust the First Name and Last Name lists (optional)
+### 5. Update the name lists
 
-- The provided lists are fairly universal for Dutch names
-- If your municipality has specific demographic characteristics, consider adding those
-- Update your ListClassifier sheets: "First Name" and "Last Name"
+- Open your ListClassifier file
+- Navigate to the "First Name" and "Last Name" sheets
+- Supplement the lists with the names of the population you process. The bundled names are examples; how much of your population they cover depends on its composition
+- A file passed via `--blacklist-path` replaces the bundled file rather than adding to it, so work in a copy that keeps all sheets and pass that copy
+- A longer list collides more often with ordinary Dutch words (Bakker, Visser); use column B for case sensitivity and the "List" sheet of your Whitelist file for exceptions
+- See the Case sensitivity section above for how column B behaves for names containing a "tussenvoegsel"
 
 ### 6. Review and test
 
@@ -912,8 +915,8 @@ De List Anonymizer laadt woordenlijsten uit een Excel-bestand (`src/anonymizer/i
 
 ### De huidige lijsten:
 
-- First Name: veelvoorkomende voornamen
-- Last Name: veelvoorkomende achternamen
+- First Name: veelvoorkomende voornamen (in het Basic-bestand voorbeelden, zelf aan te vullen voor je eigen doelgroep)
+- Last Name: veelvoorkomende achternamen (in het Basic-bestand voorbeelden, zelf aan te vullen voor je eigen doelgroep)
 - Address: straatnamen en locaties
 - Nationalities: alle nationaliteiten in het Nederlands en Engels
 - Organisation: namen van organisaties (in het Basic-bestand slechts enkele voorbeelden, desgewenst zelf aan te vullen)
@@ -942,7 +945,7 @@ De List Anonymizer laadt woordenlijsten uit een Excel-bestand (`src/anonymizer/i
 - Voeg een kolom "Case Sensitive" toe (kolom B) met de waarde 0 of 1
 - 0 (of leeg): matching ongeacht hoofdletters
 - 1: matching mét onderscheid tussen hoofd- en kleine letters
-- Bij vermeldingen van meerdere woorden met tussenvoegsels (van, der, de, enzovoort) zijn die tussenvoegsels altijd ongevoelig voor hoofdletters
+- Uitzondering voor namen: in de sheets "First Name" en "Last Name" wordt een vermelding met een tussenvoegsel (van, der, den, de, ten, ter) altijd als geheel ongevoelig voor hoofdletters gematcht, ongeacht kolom B. "De Lange" matcht daardoor ook "de lange" in gewone tekst. Dit geldt alleen voor de samengevoegde Name-tag (First Name plus Last Name); vermeldingen in de overige sheets volgen kolom B
 
 **Let op**: de sheets First Name en Last Name worden automatisch samengevoegd tot één "Name"-tag, om volledige namen beter te detecteren.
 
@@ -1036,11 +1039,14 @@ CA = anonymizer.CombinedAnonymizer()
 - Voeg de naam van je eigen organisatie toe, zodat die niet gemaskeerd wordt
 - Werk andere organisatienamen bij of verwijder ze, afhankelijk van wat je nodig hebt
 
-### 5. De lijsten First Name en Last Name aanpassen (optioneel)
+### 5. De namenlijsten bijwerken
 
-- De meegeleverde lijsten zijn redelijk universeel voor Nederlandse namen
-- Heeft jouw gemeente specifieke demografische kenmerken, overweeg die dan toe te voegen
-- Werk de sheets "First Name" en "Last Name" in je ListClassifier-bestand bij
+- Open je ListClassifier-bestand
+- Ga naar de sheets "First Name" en "Last Name"
+- Vul de lijsten aan met de namen van de doelgroep die je verwerkt. De meegeleverde namen zijn voorbeelden; hoeveel van je doelgroep ze dekken hangt af van de samenstelling ervan
+- Een bestand dat je meegeeft via `--blacklist-path` vervangt het meegeleverde bestand en vult het niet aan; werk dus in een kopie waarin alle sheets staan en geef die kopie mee
+- Een langere lijst botst vaker met gewone Nederlandse woorden (Bakker, Visser); gebruik kolom B voor hoofdlettergevoeligheid en de sheet "List" van je whitelist-bestand voor uitzonderingen
+- Zie de sectie Hoofdlettergevoeligheid hierboven voor het gedrag van kolom B bij namen met een tussenvoegsel
 
 ### 6. Nalopen en testen
 
