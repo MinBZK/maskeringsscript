@@ -11,6 +11,34 @@ golven doorgevoerd: **golf 1** op 2026-06-25 (BSN-lek, CLI-vlaggen, packaging,
 repo-URL, hygiëne) en **consolidatie + scoring-guard** op 2026-06-26. De item-codes
 (V01, V02, …) verwijzen naar de interne verbeteringen-prioriteitenmatrix.
 
+## [1.1.13] — 2026-10-19
+
+Eigen uitwerking naar aanleiding van PR #16; buitenlandse IBAN-herkenning met behoud
+van bestaande Nederlandse maskering. README bijgewerkt in EN en NL.
+
+Getoetst met het bestaande regressieharness: 485 tests geslaagd en dezelfde 11 bekende
+beperkingen als strikte verwachte fouten. Geen snapshot- of volledige-pijplijnverschillen
+op 952 corpusteksten; 138 gerichte gevallen vergeleken met main en de oorspronkelijke PR.
+De bestaande goldgate blijft gelijk; daarnaast is volledige maskering expliciet getoetst.
+
+### Opgelost
+
+- Buitenlandse rekeningen worden volledig als `<IBAN>` gemaskeerd bij een ondersteunde
+  landcode, juiste lengte en geldige mod-97-controle. De tabel bevat de 89 landcodes
+  uit SWIFT-registry release 103. Opeenvolgende rekeningen worden afzonderlijk herkend.
+- Nederlandse rekeningnummers blijven ook bij een fout controlegetal of een spatie
+  na `NL` gemaskeerd. Constructorparameters en bestaande patroonprioriteiten blijven behouden.
+- De uitbreiding onderbreekt geen bestaande URL-maskering of context voor latere
+  maskeerregels. Eigen IBAN-patronen behouden directe vervanging.
+
+### Bekende beperkingen
+
+- Buitenlandse typefouten, niet-geregistreerde formaten zoals `MA` en onregelmatige
+  spaties kunnen worden gemist. Nationale BBAN-structuur en rekeningtoewijzing worden
+  niet gevalideerd. Dit is geen bankrekeningvalidator.
+- Bij overlap met bestaande URL- of contextafhankelijke herkenning blijft die
+  afhandeling leidend. De bestaande URL-beperkingen bij Nederlandse IBANs blijven bestaan.
+
 ## [1.1.12] — 2026-10-19
 
 Eigen uitwerking van PR #15: postcodeherkenning met kleine en gemengde hoofdletters,
