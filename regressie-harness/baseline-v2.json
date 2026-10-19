@@ -1,0 +1,193 @@
+{
+  "meta": {
+    "generated": "2026-10-19T16:59:04.621608+00:00",
+    "mode": "full",
+    "git_sha": "7ab801e",
+    "metric": "source-coverage-v2",
+    "schema_version": 2,
+    "records": 16,
+    "note": "Complete masking of synthetic gold spans; recall is a legacy field name, not population recall or precision.",
+    "gold_sha256": "ba663c0663c6e99fbc5f4555517efcb641e857232338e2dd039c1abeaa87874b"
+  },
+  "per_category": {
+    "Address": {
+      "support": 1,
+      "masked": 1,
+      "recall": 1.0,
+      "pass": "ner",
+      "residual_pii": []
+    },
+    "BSN": {
+      "support": 3,
+      "masked": 3,
+      "recall": 1.0,
+      "pass": "regex",
+      "residual_pii": []
+    },
+    "Email": {
+      "support": 1,
+      "masked": 1,
+      "recall": 1.0,
+      "pass": "regex",
+      "residual_pii": []
+    },
+    "IBAN": {
+      "support": 2,
+      "masked": 2,
+      "recall": 1.0,
+      "pass": "regex",
+      "residual_pii": []
+    },
+    "ID_Number": {
+      "support": 1,
+      "masked": 1,
+      "recall": 1.0,
+      "pass": "regex",
+      "residual_pii": []
+    },
+    "KVK": {
+      "support": 1,
+      "masked": 1,
+      "recall": 1.0,
+      "pass": "regex",
+      "residual_pii": []
+    },
+    "Licence_Plate": {
+      "support": 1,
+      "masked": 1,
+      "recall": 1.0,
+      "pass": "regex",
+      "residual_pii": []
+    },
+    "Name": {
+      "support": 3,
+      "masked": 3,
+      "recall": 1.0,
+      "pass": "ner",
+      "residual_pii": []
+    },
+    "Phone": {
+      "support": 2,
+      "masked": 2,
+      "recall": 1.0,
+      "pass": "regex",
+      "residual_pii": []
+    },
+    "Postcode": {
+      "support": 2,
+      "masked": 2,
+      "recall": 1.0,
+      "pass": "regex",
+      "residual_pii": []
+    }
+  },
+  "overmasking_warnings": [],
+  "measurement": {
+    "schema_version": 1,
+    "started_utc": "2026-10-19T16:59:00.032354+00:00",
+    "finished_utc": "2026-10-19T16:59:05.402914+00:00",
+    "inputs": {
+      "git_sha_full": "7ab801e7d9ad4540b3fc71c5f4aef46ec8bd6259",
+      "git_dirty": false,
+      "environment": {
+        "python": "3.14.4",
+        "platform": "Windows-11-10.0.26300-SP0",
+        "packages": {
+          "annotated-doc": "0.0.4",
+          "anyio": "4.14.0",
+          "certifi": "2026.6.17",
+          "click": "8.4.1",
+          "colorama": "0.4.6",
+          "editdistpy": "0.2.0",
+          "et_xmlfile": "2.0.0",
+          "filelock": "3.29.4",
+          "flashtext": "2.7",
+          "flatbuffers": "25.12.19",
+          "fsspec": "2026.6.0",
+          "gliner": "0.2.27",
+          "h11": "0.16.0",
+          "hf-xet": "1.5.1",
+          "httpcore": "1.0.9",
+          "httpx": "0.28.1",
+          "huggingface_hub": "1.20.1",
+          "idna": "3.18",
+          "iniconfig": "2.3.0",
+          "Jinja2": "3.1.6",
+          "markdown-it-py": "4.2.0",
+          "MarkupSafe": "3.0.3",
+          "mdurl": "0.1.2",
+          "mpmath": "1.3.0",
+          "networkx": "3.6.1",
+          "numpy": "2.5.0",
+          "onnxruntime": "1.27.0",
+          "openpyxl": "3.1.5",
+          "packaging": "26.2",
+          "pandas": "3.0.3",
+          "pluggy": "1.6.0",
+          "protobuf": "7.35.1",
+          "Pygments": "2.20.0",
+          "pytest": "9.1.1",
+          "python-dateutil": "2.9.0.post0",
+          "PyYAML": "6.0.3",
+          "regex": "2026.5.9",
+          "rich": "15.0.0",
+          "safetensors": "0.8.0",
+          "sentencepiece": "0.2.1",
+          "setuptools": "81.0.0",
+          "shellingham": "1.5.4",
+          "six": "1.17.0",
+          "sympy": "1.14.0",
+          "symspellpy": "6.9.0",
+          "tokenizers": "0.22.2",
+          "torch": "2.12.1",
+          "tqdm": "4.68.3",
+          "transformers": "5.6.2",
+          "typer": "0.25.1",
+          "typing_extensions": "4.15.0",
+          "tzdata": "2026.2",
+          "xlsxwriter": "3.2.9"
+        }
+      },
+      "sha256": {
+        "source/pyproject.toml": "3c14216eeedb370c28d62ab4db2be8ed431c5715297589ae8a28364dc54cf9d5",
+        "gold": "ba663c0663c6e99fbc5f4555517efcb641e857232338e2dd039c1abeaa87874b",
+        "snapshot_corpus": "90edb59cf0ba2d7f13ae2b5716adfcf2ff50e8b47b197288bac31e445316993a",
+        "regex_snapshot": "9ecd3138a27b1703c12d9fc310f52c859173f1f00ec0b8b26fc8916c647bcf54",
+        "runtime_lock": "544e6ed83c85f9d038c262d5f0900244fb90e99b3d8985c5b21cfd64cfab2c51",
+        "source/__init__.py": "88b56a1fe15276a652e40b12cf5b66e1bae2a36aad2e2664463bad2add58a11d",
+        "source/__main__.py": "f7b1cca7711f809c5312c3645c03a87b23ad7ca1b894778a311d3c56ad01cbf4",
+        "source/anonymizer.py": "dae82e3573e52297d36cf5c19d2f9201c77df7674505f21d8d6a300b6845d4ce",
+        "source/config/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source/config/tag_translations.json": "d0bc4a6ced960a529f1e1553863be772927dc8f7be07507499b241af47ff1a9e",
+        "source/helpers/__init__.py": "7ab77e40a9784aa2a35f0c54f95d3fea35de8d317f752c000b48cd86c1bb85c4",
+        "source/helpers/kvk_preprocessing/__init__.py": "9ebc77993d3812506d11e8a0c9b5bfcfe3ec2e36bec172c7908bb041fc78c629",
+        "source/helpers/kvk_preprocessing/__main__.py": "c6a42534f6dc5e686077dbb83f713d936f924094877a93faaf0a8059022014a7",
+        "source/helpers/kvk_preprocessing/kvk_preprocessing.py": "831c3bc542003379ec2be8613deb6d4c5149c6b877ffdd75629dbe06351ec7fe",
+        "source/helpers/sample_testset/__init__.py": "cdade8c4a071c78f38d3fc12badd58b6f5ff5ea193fbe13bd5c4884d260176f1",
+        "source/helpers/sample_testset/__main__.py": "26b842f20cf2cf36b33a6c5bfec8b61843e9ce96684adf1d3cf083fc40a1b68b",
+        "source/helpers/sample_testset/sample_testset.py": "2df74d35481a7ea41fdee688bc57bd5935fff002a567879bb94d9f05e75e4052",
+        "source/helpers/scoring/__init__.py": "ec1b01b4205a3d478ff307c7a59ebb018248423d934de42ab888f6ec43abf950",
+        "source/helpers/scoring/__main__.py": "eccb0f8b571679be41d57928236007a495c050b0d8b124b290640677700134dd",
+        "source/helpers/scoring/scoring.py": "b40e950cc6bb22a81942f67556977e54aef8ac7ce3a5a73fe536e9fa88ef4cef",
+        "source/helpers/streetnames/__init__.py": "fa006a5c6e8b9a99df53422f8effab4ee5aaaaf49cc78ba2fcdcda3f97f9a853",
+        "source/helpers/streetnames/__main__.py": "c3051bdd2d340d75e00f45b04217432c0e416871d1f739ef68dc66fa128684c3",
+        "source/helpers/streetnames/streetnames.py": "ea8085f4f58610d95e6163c75b269bbbd2ae9249305dc029d40b0c02789793b8",
+        "source/input_files/ListClassifier Basic.xlsx": "406307b03fa79a834653304c84af7a71023e373ee8925d9bb97d68d455d19450",
+        "source/input_files/Whitelist Basic.xlsx": "806624a58ae23a0a50a591e7c1d6b1315445b4433cb38795b4dfaf5050c97093",
+        "harness/coverage_eval.py": "bb65b0b03b653fcb882adacf4ef75acddd885056a817a4b696b77231aea91ac7",
+        "harness/scorecard.py": "78ef9a2a7b1cbcc8bc1308a0b05b55dd02c1f2885e5f0d337e57fabf9c21b960",
+        "harness/harness_config.py": "22bae77a71e3b818e7dca622af66d6d6f3bfa240eaa861d62d0111a2316ff3e0",
+        "harness/measurement.py": "6718aeb9446aff986165cfff54970ec31a196a1efd13e5ae05ba38e8a2fbfc7c",
+        "model/gliner_config.json": "6ed18f655cb8c649f50116d09b81750f309767a50f4e2ea1a9f4fe224a713613",
+        "model/model.safetensors": "b06ac1ccb0a3ce1b4691824871c3274a008189c8dc5db212593b6a0bccd8ded9",
+        "model/tokenizer_config.json": "2731a13bb7c7fa133b57228b46edd15b55b2346cb3f999db06c35fa2bba89130",
+        "model/tokenizer.json": "3d81efd0311d8d5900181604ebe2b6216b7f7f0dd1e209cf69a42bfbed21b97a",
+        "model/spm.model": "13c8d666d62a7bc4ac8f040aab68e942c861f93303156cc28f5c7e885d86d6e3",
+        "model/added_tokens.json": "7017ade99fb57843069a00529b2ddba5bd8cb83df1474fd6f08aa1a2afe90279",
+        "model/special_tokens_map.json": "ed7c099c988dbb414b18a6980d20cb57b91b7cd119f6f6941eb364b0e892e712",
+        "model/backbone_config": "b23c26d261fc378abfeb188bfee0a2913673857cfd3cbb71208aca2f9b08bfa6"
+      }
+    },
+    "result_sha256": "b3fba5d19492428130c6d87b24d9e1a3afbc5bb8494755c362a946461ac2325c"
+  }
+}

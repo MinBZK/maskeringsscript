@@ -1,0 +1,101 @@
+[
+  {
+    "id": "K01",
+    "input": "ik woon 5701 En Helmond",
+    "actual": "ik woon 5701 En Helmond",
+    "desired": "ik woon <Postcode> Helmond",
+    "risk": "Missed postcode",
+    "test_file": "tests/test_pr15_postcode_context.py",
+    "desired_test": "tests/test_pr15_postcode_context.py::test_known_postcode_limitations_desired_behavior[K01]"
+  },
+  {
+    "id": "K02",
+    "input": "5701 En Helmond",
+    "actual": "5701 En Helmond",
+    "desired": "<Postcode> Helmond",
+    "risk": "Missed postcode",
+    "test_file": "tests/test_pr15_postcode_context.py",
+    "desired_test": "tests/test_pr15_postcode_context.py::test_known_postcode_limitations_desired_behavior[K02]"
+  },
+  {
+    "id": "K03",
+    "input": "Postcode 2020 en huisnummer 14 ontbreken.",
+    "actual": "Postcode <Postcode> huisnummer 14 ontbreken.",
+    "desired": "Postcode 2020 en huisnummer 14 ontbreken.",
+    "risk": "Incorrect postcode masking",
+    "test_file": "tests/test_pr15_postcode_context.py",
+    "desired_test": "tests/test_pr15_postcode_context.py::test_known_postcode_limitations_desired_behavior[K03]"
+  },
+  {
+    "id": "K04",
+    "input": "Postcode: 2020 en huisnummer 14 ontbreken.",
+    "actual": "Postcode: <Postcode> huisnummer 14 ontbreken.",
+    "desired": "Postcode: 2020 en huisnummer 14 ontbreken.",
+    "risk": "Incorrect postcode masking",
+    "test_file": "tests/test_pr15_postcode_context.py",
+    "desired_test": "tests/test_pr15_postcode_context.py::test_known_postcode_limitations_desired_behavior[K04]"
+  },
+  {
+    "id": "K05",
+    "input": "Benoemd in 2020 ad interim.",
+    "actual": "Benoemd in <Postcode> interim.",
+    "desired": "Benoemd in 2020 ad interim.",
+    "risk": "Incorrect postcode masking",
+    "test_file": "tests/test_pr15_postcode_context.py",
+    "desired_test": "tests/test_pr15_postcode_context.py::test_known_postcode_limitations_desired_behavior[K05]"
+  },
+  {
+    "id": "K06",
+    "input": "In 2020 ad hoc besloten.",
+    "actual": "In <Postcode> hoc besloten.",
+    "desired": "In 2020 ad hoc besloten.",
+    "risk": "Incorrect postcode masking",
+    "test_file": "tests/test_pr15_postcode_context.py",
+    "desired_test": "tests/test_pr15_postcode_context.py::test_known_postcode_limitations_desired_behavior[K06]"
+  },
+  {
+    "id": "K07",
+    "input": "Geheugen 2000 MB",
+    "actual": "Geheugen <Postcode>",
+    "desired": "Geheugen 2000 MB",
+    "risk": "Incorrect postcode masking",
+    "test_file": "tests/test_pr15_postcode_context.py",
+    "desired_test": "tests/test_pr15_postcode_context.py::test_known_postcode_limitations_desired_behavior[K07]"
+  },
+  {
+    "id": "K08",
+    "input": "Zie https://example.org/dossiers/3011AB/henkzwartendijk voor uw dossier.",
+    "actual": "Zie <URL>/<Postcode>/henkzwartendijk voor uw dossier.",
+    "desired": "Zie <URL> voor uw dossier.",
+    "risk": "Visible URL fragment",
+    "test_file": "tests/test_pr15_postcode_context.py",
+    "desired_test": "tests/test_pr15_postcode_context.py::test_postcode_does_not_break_complete_url[K08]"
+  },
+  {
+    "id": "K09",
+    "input": "3011 AB 12-14",
+    "actual": "<Postcode>-14",
+    "desired": "<Postcode>",
+    "risk": "Visible house-number fragment",
+    "test_file": "tests/test_pr15_postcode_context.py",
+    "desired_test": "tests/test_pr15_postcode_context.py::test_complete_house_number_parts_desired_behavior[K09]"
+  },
+  {
+    "id": "K10",
+    "input": "3011 AB 12/3",
+    "actual": "<Postcode>/3",
+    "desired": "<Postcode>",
+    "risk": "Visible house-number fragment",
+    "test_file": "tests/test_pr15_postcode_context.py",
+    "desired_test": "tests/test_pr15_postcode_context.py::test_complete_house_number_parts_desired_behavior[K10]"
+  },
+  {
+    "id": "K11",
+    "input": "3011 AB 12bis",
+    "actual": "<Postcode> 12bis",
+    "desired": "<Postcode>",
+    "risk": "Visible house-number fragment",
+    "test_file": "tests/test_pr15_postcode_context.py",
+    "desired_test": "tests/test_pr15_postcode_context.py::test_complete_house_number_parts_desired_behavior[K11]"
+  }
+]
