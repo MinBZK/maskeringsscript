@@ -11,6 +11,43 @@ golven doorgevoerd: **golf 1** op 2026-06-25 (BSN-lek, CLI-vlaggen, packaging,
 repo-URL, hygiëne) en **consolidatie + scoring-guard** op 2026-06-26. De item-codes
 (V01, V02, …) verwijzen naar de interne verbeteringen-prioriteitenmatrix.
 
+## [1.1.12] — 2026-10-19
+
+Eigen uitwerking van PR #15: postcodeherkenning met kleine en gemengde hoofdletters,
+met een uitsluitlijst en expliciete postcodecontext. Output-rakend; gecontroleerd tegen
+`main @ d8f7ab5` met het regressieharness: 146 tests geslaagd en 11 bekende beperkingen
+als strikte verwachte fouten vastgelegd. Daarnaast 0 regex-snapshotverschillen en
+96 gerichte gevallen. De volledige recall-gate op
+de synthetische goldset bleef groen (alle categorieën 1,00, residu-PII 0); het volledige
+corpus van 952 teksten gaf door regex + lijst + NER geen uitvoerverschillen.
+
+### Opgelost
+
+- **Postcodes met kleine of gemengde hoofdletters werden gemist.** Vormen zoals `3011 ab`
+  en `1012 Ab` worden nu gemaskeerd. Gangbare tweeletterwoorden, eenheden en afkortingen
+  worden ongeacht hoofdletters uitgesloten, zodat onder meer `1998 En`, `2500 kW` en
+  `2020 jl.` behouden blijven. Na een expliciete aanduiding zoals `postcode:` of
+  `postcode is` worden ook dubbelzinnige letterparen geaccepteerd (`postcode: 5701 en`).
+  De aanvullende herkenning volgt na de bestaande regexmaskering en nabewerking, zodat
+  herkende telefoonnummers, creditcards en URLs intact gemaskeerd blijven.
+  Hoofdletterpostcodes, tagconfiguratie en bestaande patroonprioriteiten blijven behouden.
+
+### Bekende beperkingen
+
+- Zonder expliciete postcodecontext kunnen uitgesloten letterparen nog worden gemist,
+  bijvoorbeeld `5701 En`. Onder meer `2020 ad hoc`, `Postcode 2020 en huisnummer 14 ontbreken`
+  en het al eerder gemaskeerde `2000 MB` kunnen onterecht als postcode worden behandeld.
+  Dit is een heuristiek, geen validatie tegen een volledig postcodebestand.
+- Een hoofdletterpostcode binnen een URL kan de bestaande URL-maskering onderbreken
+  en een deel van de URL zichtbaar laten. Dit vraagt een afzonderlijke verbetering.
+- De bestaande huisnummerregel is ongewijzigd: ook een volgend jaartal of aantal kan
+  verdwijnen, inclusief over een regelgrens. Bereiken en toevoegingen zoals `12-14`
+  en `12/3` worden niet volledig gemaskeerd. Dit vraagt een afzonderlijke verbetering.
+
+### Documentatie
+
+- README (EN + NL): postcodegedrag en beperkingen van postcode- en huisnummerherkenning beschreven.
+
 ## [1.1.11] — 2026-08-25
 
 Golf 4, fase 2 (zesde en laatste item, V14). Output-rakend (precisie + leestekens); geverifieerd

@@ -59,6 +59,7 @@ import re # Regular Expressions (Regex)
 import json
 from pathlib import Path
 from typing import Dict, Pattern, Iterable
+from uuid import uuid4
 
 import pandas as pd # For reading excel files
 import flashtext # For fast processing in ListAnonymizer
@@ -95,7 +96,7 @@ with translation_file.open("r", encoding="utf-8") as f:
 
 # Exported symbols
 __all__ = ["RegexAnonymizer", "ListAnonymizer", "NERAnonymizer", "CombinedAnonymizer", "TAGGED_PATTERNS", "__version__"]
-__version__ = "1.1.11"
+__version__ = "1.1.12"
 
 # Logging setup
 LOGGER = logging.getLogger(__name__)
@@ -264,9 +265,9 @@ TAGGED_PATTERNS: Dict[str, str] = {
     # ------------------------------------------------------------------- #
     # POSTAL / LICENCE                                                   #
     # ------------------------------------------------------------------- #
-    # Dutch postal code
+    # Dutch postal code candidates; _anonymize_postcode guards ambiguous letter pairs.
     "Postcode": r"""
-        \b[1-9]\d{3}\s?[A-Z]{2}\b                     # 1234 AB
+        (?-i:\b[1-9]\d{3}\s?[A-Za-z]{2}\b)          # 1234 AB / 1234 ab
     """,
 
     # Dutch vehicle licence plates
@@ -521,6 +522,8 @@ class RegexAnonymizer:
             elif tag == "Credit_Card" and self._validate_credit_card:
                 # Special handling for Credit_Card: validate with Luhn checksum
                 text = self._anonymize_credit_card(text, pat)
+            elif tag == "Postcode":
+                text = self._anonymize_postcode(text, pat, legacy_only=True)
             else:
                 text = pat.sub(self._mask.format(tag=TRANSLATIONS[TAG_LANGUAGE].get(tag, tag)), text)
 
@@ -535,8 +538,57 @@ class RegexAnonymizer:
         # Post processing: mask a signature name after a closing greeting (deterministic;
         # NER misses names in signature position, so handle it in the regex layer).
         text = self._mask_signature_names(text)
+
+        # Additional case forms must not split fields recognised by earlier passes.
+        if "Postcode" in self._patterns:
+            text = self._anonymize_postcode(text, self._patterns["Postcode"])
         return text
-    
+
+    # Preserve uppercase matching. For other case forms, these common words,
+    # units and abbreviations require an explicit Dutch postcode cue.
+    _POSTCODE_AMBIGUOUS_LETTERS = frozenset(
+        "en op in is te om af of na er ze we je ik uw de ge me al as nu zo to be do "
+        "ex ja ho nl eu km kg mg gr ml cl dl hl cm mm dm kb mb gb tb db hz pt px "
+        "st ha kw pk cc cv tv wc pc cd jl ca nr bv dr mr ir jr sr vs tm".split()
+    )
+    _POSTCODE_CONTEXT_RE = re.compile(
+        r"\bpostcode[ \t]*(?:(?:is|luidt)[ \t]+|[:=][ \t]*)?$", re.IGNORECASE
+    )
+
+    _POSTCODE_DUTCH_SHAPE_RE = re.compile(r"[1-9]\d{3}\s?[A-Za-z]{2}")
+
+    def _anonymize_postcode(self, text: str, pattern: Pattern, *, legacy_only: bool = False) -> str:
+        """Preserve legacy matches first; add guarded Dutch case forms afterwards."""
+        mask = self._mask.format(tag=TRANSLATIONS[TAG_LANGUAGE].get("Postcode", "Postcode"))
+        marker = None
+
+        def replace(match: re.Match) -> str:
+            nonlocal marker
+            value = match.group(0)
+            # Custom non-Dutch patterns retain their original direct substitution.
+            if not self._POSTCODE_DUTCH_SHAPE_RE.fullmatch(value) or value[-2:].isupper():
+                return mask if legacy_only else value
+            if legacy_only:
+                return value
+            if (
+                value[-2:].lower() in self._POSTCODE_AMBIGUOUS_LETTERS
+                and not self._POSTCODE_CONTEXT_RE.search(text, 0, match.start())
+            ):
+                return value
+            if marker is None:
+                marker = "\0POSTCODE-" + uuid4().hex + "\x01"
+                while marker in text:
+                    marker = "\0POSTCODE-" + uuid4().hex + "\x01"
+            return marker
+
+        result = pattern.sub(replace, text)
+        if marker is None:
+            return result
+        # Apply the existing house-number rule once, only to newly added tags.
+        # Replace all new codes first so adjacent codes are not read as house numbers.
+        result = re.sub(rf'({re.escape(marker)})\s+(\d+[A-Za-z]?)\b', marker, result)
+        return result.replace(marker, mask)
+
     # Words to be checked for numbers right after them ('balie 12', 'sector 3A')
     _NUMBER_INDICATORS = r"balie|sector|pier|parkeerzone|zone|agent[- \s]*id"
 

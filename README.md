@@ -195,6 +195,12 @@ Uses regular expressions to detect fixed-pattern PII such as:
 
 The regex patterns are defined in the `TAGGED_PATTERNS` dictionary and can be customized. High-specificity patterns are applied first, followed by broader patterns to maximize recall while maintaining precision.
 
+**Postal codes:** uppercase codes such as `3011 AB` retain their existing behaviour. Lowercase and mixed-case codes such as `3011 ab` and `3011 Ab` are also masked. Common two-letter Dutch words, units and abbreviations are excluded in these case forms, to avoid masking text such as `1998 en`, `2500 kW` or `2020 jl.`. These ambiguous pairs are accepted after an explicit cue such as `postcode:`, `postcode is` or `postcode luidt`: `postcode: 5701 en` becomes `postcode: <Postcode>`. Additional lowercase and mixed-case recognition runs after the existing regex masking and post-processing, so it cannot interrupt a recognised phone number, credit card or URL. Cues are checked in the remaining text. Custom non-Dutch postcode formats retain their configured matching behaviour.
+
+This remains a heuristic. Without that cue, a code such as `5701 En` can be missed. Text such as `2020 ad hoc` or `Postcode 2020 en huisnummer 14 ontbreken` can still be masked incorrectly; uppercase units such as `2000 MB` also retain their existing false match. This behaviour has not been validated against a complete postcode register. An existing limitation remains: an uppercase postcode inside a URL can interrupt URL masking and leave part of that URL visible.
+
+After a postcode tag, the existing house-number rule masks a following number, including across a line break. It can therefore also remove a year or count, and it does not fully mask additions such as `12-14` or `12/3`. Review the output; postcode recognition does not guarantee that the whole address has been masked.
+
 ### 2. List Anonymizer (ListAnonymizer class)
 
 Matches words against curated lists loaded from an Excel file (`ListClassifier Basic.xlsx`):
@@ -763,6 +769,12 @@ Gebruikt reguliere expressies om PII met een vast patroon te detecteren, zoals:
 - Creditcards: Credit_Card (getallen van 13 t/m 19 cijfers)
 
 De regexpatronen staan in het woordenboek `TAGGED_PATTERNS` en zijn aan te passen. Patronen met een hoge specificiteit worden als eerste toegepast, gevolgd door bredere patronen, om de recall te maximaliseren met behoud van precisie.
+
+**Postcodes:** hoofdlettercodes zoals `3011 AB` behouden hun bestaande gedrag. Codes in kleine letters of met gemengde hoofdletters, zoals `3011 ab` en `3011 Ab`, worden ook gemaskeerd. Gangbare Nederlandse tweeletterwoorden, eenheden en afkortingen worden bij deze schrijfwijzen uitgesloten, zodat tekst zoals `1998 en`, `2500 kW` of `2020 jl.` niet wordt gemaskeerd. Deze dubbelzinnige letterparen worden wel geaccepteerd na een expliciete aanduiding zoals `postcode:`, `postcode is` of `postcode luidt`: `postcode: 5701 en` wordt `postcode: <Postcode>`. De aanvullende herkenning van kleine en gemengde letters volgt na de bestaande regexmaskering en nabewerking, zodat zij een herkend telefoonnummer, creditcardnummer of URL niet kan onderbreken. De contextcontrole gebruikt de overgebleven tekst. Eigen niet-Nederlandse postcodeformaten behouden hun ingestelde matchgedrag.
+
+Dit blijft een heuristiek. Zonder die aanduiding kan een code zoals `5701 En` worden gemist. Tekst zoals `2020 ad hoc` of `Postcode 2020 en huisnummer 14 ontbreken` kan nog steeds onterecht worden gemaskeerd; ook hoofdlettereenheden zoals `2000 MB` behouden hun bestaande onterechte match. Dit gedrag is niet getoetst aan een volledig postcodebestand. Een bestaande beperking blijft: een hoofdletterpostcode binnen een URL kan de URL-maskering onderbreken en een deel van die URL zichtbaar laten.
+
+Na een postcodetag maskeert de bestaande huisnummerregel een volgend getal, ook over een regelgrens. Daardoor kan ook een jaartal of aantal verdwijnen en worden toevoegingen zoals `12-14` of `12/3` niet volledig gemaskeerd. Controleer de uitvoer: postcodeherkenning garandeert niet dat het hele adres is gemaskeerd.
 
 ### 2. List Anonymizer (klasse ListAnonymizer)
 
