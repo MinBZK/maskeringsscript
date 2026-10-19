@@ -353,8 +353,8 @@ The List Anonymizer uses an Excel file (`src/anonymizer/input_files/ListClassifi
 
 ### Current lists include:
 
-- First Name: Common first names
-- Last Name: Common surnames
+- First Name: Example first names, to review and supplement for your own population
+- Last Name: Example surnames, to review and supplement for your own population
 - Address: Street names and locations
 - Nationalities: All nationalities in Dutch and English
 - Organisation: Names of organisations (just a few examples in the Basic file, to be filled by users if desired)
@@ -380,10 +380,14 @@ The List Anonymizer uses an Excel file (`src/anonymizer/input_files/ListClassifi
 
 ### Case sensitivity:
 
+Column B controls exact list matching:
+
 - Add a "Case Sensitive" column (column B) with values 0 or 1
 - 0 (or blank): Case-insensitive matching
 - 1: Case-sensitive matching
-- For multi-word entries with "tussenvoegsels" (van, der, de, etc.), these connecting words are always case-insensitive
+- Exception for the `Name` category (normally combined from "First Name" and "Last Name"): an entry containing a whitespace-separated word `van`, `der`, `den`, `de`, `ten` or `ter` is matched case-insensitively as a whole, regardless of column B. Thus "De Lange" also matches "de lange" in ordinary text. The exception does not apply to other categories such as `Address`
+
+The exception applies to "De Lange", but not "De-Lange". Fuzzy matching can still mask a word through a similar listed entry; NER has its own recognition rules.
 
 **Note**: First Name and Last Name sheets are automatically combined into a single "Name" tag to improve detection of full names.
 
@@ -477,11 +481,13 @@ CA = anonymizer.CombinedAnonymizer()
 - Add your organisation name to prevent it from being masked
 - Update or remove other organisation names depending on your needs
 
-### 5. Adjust the First Name and Last Name lists (optional)
+### 5. Review and adapt the name lists
 
-- The provided lists are fairly universal for Dutch names
-- If your municipality has specific demographic characteristics, consider adding those
-- Update your ListClassifier sheets: "First Name" and "Last Name"
+- Open a copy of your ListClassifier file and review the "First Name" and "Last Name" sheets
+- Check the example entries against your intended use and supplement them based on reviewed cases of missed names. Coverage depends on your data
+- A file passed via `--blacklist-path` replaces the bundled workbook rather than extending it; start with a copy that retains all sheets
+- Review [case sensitivity](#case-sensitivity). Use context-specific phrases in the "List" sheet of your Whitelist file to reduce false matches. Whitelisting a bare surname can also leave real names unmasked by the List Anonymizer
+- The "List" whitelist applies to the list pass; NER uses separate [whitelist settings](#whitelists-weak-and-strong)
 
 ### 6. Review and test
 
@@ -932,8 +938,8 @@ De List Anonymizer laadt woordenlijsten uit een Excel-bestand (`src/anonymizer/i
 
 ### De huidige lijsten:
 
-- First Name: veelvoorkomende voornamen
-- Last Name: veelvoorkomende achternamen
+- First Name: voorbeeldvoornamen, te controleren en aan te vullen voor je eigen doelgroep
+- Last Name: voorbeeldachternamen, te controleren en aan te vullen voor je eigen doelgroep
 - Address: straatnamen en locaties
 - Nationalities: alle nationaliteiten in het Nederlands en Engels
 - Organisation: namen van organisaties (in het Basic-bestand slechts enkele voorbeelden, desgewenst zelf aan te vullen)
@@ -959,10 +965,14 @@ De List Anonymizer laadt woordenlijsten uit een Excel-bestand (`src/anonymizer/i
 
 ### Hoofdlettergevoeligheid:
 
+Kolom B stuurt de exacte lijstmatching:
+
 - Voeg een kolom "Case Sensitive" toe (kolom B) met de waarde 0 of 1
 - 0 (of leeg): matching ongeacht hoofdletters
 - 1: matching mét onderscheid tussen hoofd- en kleine letters
-- Bij vermeldingen van meerdere woorden met tussenvoegsels (van, der, de, enzovoort) zijn die tussenvoegsels altijd ongevoelig voor hoofdletters
+- Uitzondering voor de categorie `Name` (doorgaans samengevoegd uit "First Name" en "Last Name"): een vermelding met het losse, door witruimte gescheiden woord `van`, `der`, `den`, `de`, `ten` of `ter` wordt als geheel ongevoelig voor hoofdletters gematcht, ongeacht kolom B. "De Lange" matcht daardoor ook "de lange" in gewone tekst. De uitzondering geldt niet voor andere categorieën, zoals `Address`
+
+De uitzondering geldt voor "De Lange", maar niet voor "De-Lange". Fuzzy matching kan een woord alsnog via een vergelijkbare lijstvermelding maskeren; NER heeft eigen herkenningsregels.
 
 **Let op**: de sheets First Name en Last Name worden automatisch samengevoegd tot één "Name"-tag, om volledige namen beter te detecteren.
 
@@ -1056,11 +1066,13 @@ CA = anonymizer.CombinedAnonymizer()
 - Voeg de naam van je eigen organisatie toe, zodat die niet gemaskeerd wordt
 - Werk andere organisatienamen bij of verwijder ze, afhankelijk van wat je nodig hebt
 
-### 5. De lijsten First Name en Last Name aanpassen (optioneel)
+### 5. De namenlijsten controleren en aanpassen
 
-- De meegeleverde lijsten zijn redelijk universeel voor Nederlandse namen
-- Heeft jouw gemeente specifieke demografische kenmerken, overweeg die dan toe te voegen
-- Werk de sheets "First Name" en "Last Name" in je ListClassifier-bestand bij
+- Open een kopie van je ListClassifier-bestand en controleer de sheets "First Name" en "Last Name"
+- Beoordeel of de voorbeeldvermeldingen passen bij je gebruik en vul ze aan op basis van gecontroleerde gevallen van gemiste namen. De dekking hangt af van je gegevens
+- Een bestand dat je meegeeft via `--blacklist-path` vervangt het meegeleverde bestand en vult het niet aan; begin met een kopie waarin alle sheets behouden zijn
+- Controleer de [hoofdlettergevoeligheid](#hoofdlettergevoeligheid). Gebruik contextspecifieke woordgroepen in de sheet "List" van je whitelist-bestand om onterechte matches te beperken. Een losse achternaam whitelisten kan ook echte namen ongemaskeerd laten in de List Anonymizer
+- De whitelist "List" geldt voor de lijststap; NER gebruikt afzonderlijke [whitelist-instellingen](#whitelists-weak-en-strong)
 
 ### 6. Nalopen en testen
 

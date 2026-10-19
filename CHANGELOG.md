@@ -11,6 +11,16 @@ golven doorgevoerd: **golf 1** op 2026-06-25 (BSN-lek, CLI-vlaggen, packaging,
 repo-URL, hygiëne) en **consolidatie + scoring-guard** op 2026-06-26. De item-codes
 (V01, V02, …) verwijzen naar de interne verbeteringen-prioriteitenmatrix.
 
+## [Onuitgebracht]
+
+### Documentatie
+
+- README (EN/NL), naar aanleiding van PR #17: namenlijsten als voorbeelden beschreven,
+  vervanging via `--blacklist-path` verduidelijkt en de uitleg over hoofdlettergevoeligheid
+  gelijkgetrokken met de actieve code. Exacte matching, fuzzy matching en NER zijn
+  onderscheiden; het effect van whitelist-uitzonderingen is toegelicht.
+- Alleen documentatie; geen gewijzigde maskering, lijsten of pakketversie.
+
 ## [1.1.13] — 2026-10-19
 
 Eigen uitwerking naar aanleiding van PR #16; buitenlandse IBAN-herkenning met behoud
