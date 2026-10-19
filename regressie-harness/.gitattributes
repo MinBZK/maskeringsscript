@@ -1,0 +1,3 @@
+# Frozen fixture bytes are also used in provenance; do not convert line endings.
+data/*.jsonl -text
+snapshots/*.json -text

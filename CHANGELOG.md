@@ -13,6 +13,20 @@ repo-URL, hygiëne) en **consolidatie + scoring-guard** op 2026-06-26. De item-c
 
 ## [Onuitgebracht]
 
+### Toegevoegd
+
+- Regressieharnas met synthetische fixtures, een bevroren regex-snapshot voor
+  952 teksten en een goldgate die gedeeltelijk zichtbare gegevens afkeurt.
+  Elf bekende fouten blijven als strikte verwachte fouten gedocumenteerd.
+- Afzonderlijke testniveaus voor het harnas, de volledige modelvrije regressie
+  en offline modelintegratie, met vastgelegde runtimeversies en meetprovenance.
+  De volledige-suitevlag bewaakt dat verplichte controles worden uitgevoerd.
+- Schone Linux-runtime-installatie gecontroleerd op Ubuntu 26.04.1 x86_64 met
+  Python 3.14.4: 600 tests geslaagd, 11 verwachte fouten en 13/13 volledig
+  gemaskeerde goldspans in de modelvrije gate. Linux-modelwerking en GitHub
+  Actions zijn nog niet getoetst respectievelijk ingericht; indirecte
+  Linux-afhankelijkheden zijn nog niet volledig vastgezet.
+
 ### Documentatie
 
 - README (EN/NL), naar aanleiding van PR #17: namenlijsten als voorbeelden beschreven,

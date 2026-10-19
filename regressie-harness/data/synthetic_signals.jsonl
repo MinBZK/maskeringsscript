@@ -1,0 +1,16 @@
+{"id": "S01", "text": "Burger met BSN 111222333 belde over zijn aanvraag.", "pii": [{"value": "111222333", "category": "BSN", "pass": "regex"}]}
+{"id": "S02", "text": "Het burgerservicenummer 123456789 stond verkeerd in de brief.", "pii": [{"value": "123456789", "category": "BSN", "pass": "regex"}]}
+{"id": "S03", "text": "Bel mij gerust terug op 0612345678 na vijf uur.", "pii": [{"value": "0612345678", "category": "Phone", "pass": "regex"}]}
+{"id": "S04", "text": "Stuur de stukken naar j.jansen@voorbeeld.nl voor donderdag.", "pii": [{"value": "j.jansen@voorbeeld.nl", "category": "Email", "pass": "regex"}]}
+{"id": "S05", "text": "Het bedrag is overgemaakt naar NL12 RABO 0123 4567 89 vorige week.", "pii": [{"value": "NL12 RABO 0123 4567 89", "category": "IBAN", "pass": "regex"}]}
+{"id": "S06", "text": "Het adres is Coolsingel 40, 3011 AD in het centrum.", "pii": [{"value": "3011 AD", "category": "Postcode", "pass": "regex"}, {"value": "Coolsingel 40", "category": "Address", "pass": "ner"}]}
+{"id": "S07", "text": "De auto met kenteken 12-AB-34 reed snel weg.", "pii": [{"value": "12-AB-34", "category": "Licence_Plate", "pass": "regex"}]}
+{"id": "S08", "text": "De onderneming heeft KvK-nummer 12345678 geregistreerd.", "pii": [{"value": "12345678", "category": "KVK", "pass": "regex"}]}
+{"id": "S09", "text": "Mevrouw Pietje Puk diende vorige maand een klacht in.", "pii": [{"value": "Pietje Puk", "category": "Name", "pass": "ner"}]}
+{"id": "S10", "text": "Jan Jansen is overdag bereikbaar via 0612345679 voor vragen.", "pii": [{"value": "Jan Jansen", "category": "Name", "pass": "ner"}, {"value": "0612345679", "category": "Phone", "pass": "regex"}]}
+{"id": "S11", "text": "De container stond al een week ongebruikt op straat.", "pii": []}
+{"id": "S12", "text": "Er was de hele avond veel geluidsoverlast in de wijk.", "pii": []}
+{"id": "S13", "text": "Bestelnummer 1234 5678 9012 345 is gisteren verzonden.", "pii": []}
+{"id": "S14", "text": "Artikel met barcode 1234567890123 ligt weer op voorraad.", "pii": []}
+{"id": "S15", "text": "Betaling van Jan de Vries via IBAN NL12 INGB 0987 6543 21.", "pii": [{"value": "Jan de Vries", "category": "Name", "pass": "ner"}, {"value": "NL12 INGB 0987 6543 21", "category": "IBAN", "pass": "regex"}]}
+{"id": "S16", "text": "Klant 1234567 (BSN 111222333) woont op postcode 1234 AB.", "pii": [{"value": "1234567", "category": "ID_Number", "pass": "regex"}, {"value": "111222333", "category": "BSN", "pass": "regex"}, {"value": "1234 AB", "category": "Postcode", "pass": "regex"}]}

@@ -24,6 +24,7 @@ This repository is the published version of the anonymization tool, derived from
 - [How to Configure NER](#how-to-configure-ner)
 - [Steps to Generalize to New Organisation](#steps-to-generalize-to-new-organisation)
 - [Evaluation Scores](#evaluation-scores)
+- [Regression Tests](#regression-tests)
 - [License](#license)
 
 ---
@@ -563,6 +564,22 @@ Scores are established through the human evaluation process described above; see
 
 ---
 
+## Regression Tests
+
+The [regression harness](regressie-harness/README.md) contains synthetic fixtures,
+the frozen regex snapshot, a gold gate that detects partially visible entities,
+and the eleven documented known failures. Its documentation is in English.
+
+Use a separate virtual environment and follow the harness installation instructions.
+From the repository root, the full model-free suite is:
+
+```bash
+python -m pytest regressie-harness --require-full-suite
+```
+
+Model tests require separately prepared local model files and cache. A green run
+checks the documented cases; it does not guarantee that output is free of personal data.
+
 ## License
 
 This project is licensed under the European Union Public Licence v1.2 (EUPL-1.2).
@@ -607,6 +624,7 @@ Deze repository is de gepubliceerde versie van het anonimiseringsscript, afgelei
 - [NER configureren](#ner-configureren)
 - [Generaliseren naar nieuwe organisatie](#generaliseren-naar-nieuwe-organisatie)
 - [Evaluatiescores](#evaluatiescores)
+- [Regressietests](#regressietests)
 - [Licentie](#licentie)
 
 ---
@@ -1147,6 +1165,23 @@ Bij tests op gegevens van de gemeente Rotterdam behaalde het script:
 De scores komen tot stand via de hierboven beschreven menselijke beoordeling; zie het voorbehoud bij Prestatiescores.
 
 ---
+
+## Regressietests
+
+Het [regressieharnas](regressie-harness/README.md) bevat synthetische testgegevens,
+de bevroren regex-snapshot, een goldgate die gedeeltelijk zichtbare gegevens
+detecteert en de elf gedocumenteerde bekende fouten. De harnasdocumentatie is Engels.
+
+Gebruik een afzonderlijke virtuele omgeving en volg de installatie-instructies
+van het harnas. Vanuit de repo-root draait de volledige modelvrije suite met:
+
+```bash
+python -m pytest regressie-harness --require-full-suite
+```
+
+Modeltests vereisen afzonderlijk voorbereide lokale modelbestanden en cache.
+Een groene run toetst de beschreven gevallen en garandeert geen uitvoer zonder
+persoonsgegevens.
 
 ## Licentie
 
