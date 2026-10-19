@@ -96,7 +96,7 @@ with translation_file.open("r", encoding="utf-8") as f:
 
 # Exported symbols
 __all__ = ["RegexAnonymizer", "ListAnonymizer", "NERAnonymizer", "CombinedAnonymizer", "TAGGED_PATTERNS", "__version__"]
-__version__ = "1.1.12"
+__version__ = "1.1.13"
 
 # Logging setup
 LOGGER = logging.getLogger(__name__)
@@ -163,6 +163,32 @@ _PLATE_NOSEP = r"""
 # ones. Do NOT reorder entries without re-verifying the output; the           #
 # characterization snapshot in the regression harness guards this.            #
 # --------------------------------------------------------------------------- #
+
+# Supported prefixes and lengths: SWIFT IBAN Registry, Release 103 (Sep 2026).
+# https://www.swift.com/resource/iban-registry-pdf
+_IBAN_LENGTHS: Dict[str, int] = {
+    "AD": 24, "AE": 23, "AL": 28, "AT": 20, "AZ": 28, "BA": 20, "BE": 16, "BG": 22,
+    "BH": 22, "BI": 27, "BR": 29, "BY": 28, "CH": 21, "CR": 22, "CY": 28, "CZ": 24,
+    "DE": 22, "DJ": 27, "DK": 18, "DO": 28, "EE": 20, "EG": 29, "ES": 24, "FI": 18,
+    "FK": 18, "FO": 18, "FR": 27, "GB": 22, "GE": 22, "GI": 23, "GL": 18, "GR": 27,
+    "GT": 28, "HN": 28, "HR": 21, "HU": 28, "IE": 22, "IL": 23, "IQ": 23, "IS": 26,
+    "IT": 27, "JO": 30, "KW": 30, "KZ": 20, "LB": 28, "LC": 32, "LI": 21, "LT": 20,
+    "LU": 20, "LV": 21, "LY": 25, "MC": 27, "MD": 24, "ME": 22, "MK": 19, "MN": 20,
+    "MR": 27, "MT": 31, "MU": 30, "NI": 28, "NL": 18, "NO": 15, "OM": 23, "PK": 24,
+    "PL": 28, "PS": 29, "PT": 25, "QA": 29, "RO": 24, "RS": 22, "RU": 33, "SA": 24,
+    "SC": 31, "SD": 18, "SE": 24, "SI": 19, "SK": 24, "SM": 27, "SO": 23, "ST": 25,
+    "SV": 28, "TL": 23, "TN": 24, "TR": 26, "UA": 29, "VA": 22, "VG": 24, "XK": 20,
+    "YE": 30,
+}
+_LEGACY_NL_IBAN = r"\bNL\s?\d{2}\s?[A-Z]{4}\s?(?:\d{4}\s?){2}\d{2}\b"
+_LEGACY_NL_IBAN_RE = re.compile(_LEGACY_NL_IBAN, re.IGNORECASE | re.VERBOSE)
+# Exact country lengths avoid consuming words or the start of a second account.
+_FOREIGN_IBAN = "|".join(
+    rf"(?ai:{country}[0-9]{{2}})(?:\s?(?ai:[A-Z0-9]{{4}})){{{(length - 4) // 4}}}"
+    + (rf"\s?(?ai:[A-Z0-9]{{{(length - 4) % 4}}})" if (length - 4) % 4 else "")
+    for country, length in _IBAN_LENGTHS.items() if country != "NL"
+)
+_IBAN_PATTERN = rf"(?:{_LEGACY_NL_IBAN}|\b(?:{_FOREIGN_IBAN})\b)"
 
 TAGGED_PATTERNS: Dict[str, str] = {
     # NB: keep broad enough for high recall, refine in later passes if needed.
@@ -257,10 +283,8 @@ TAGGED_PATTERNS: Dict[str, str] = {
         \b
     """,
 
-    # IBAN: NLkk BBBB CCCC CCCC CC  (spaces optional, bank code variable)
-    "IBAN": r"""
-        \bNL\s?\d{2}\s?[A-Z]{4}\s?(?:\d{4}\s?){2}\d{2}\b
-    """,
+    # Preserve Dutch matching; foreign candidates require country length and mod-97.
+    "IBAN": _IBAN_PATTERN,
     
     # ------------------------------------------------------------------- #
     # POSTAL / LICENCE                                                   #
@@ -361,6 +385,21 @@ def _build_patterns(active_tags: Iterable[str] | None = None) -> Dict[str, Patte
 # --------------------------------------------------------------------------- #
 # 2. Helper functions                                                         #
 # --------------------------------------------------------------------------- #
+
+def is_valid_iban(iban: str) -> bool:
+    """Check registered prefix, length and mod-97; not bank/account existence."""
+    if not isinstance(iban, str) or not re.fullmatch(r"[A-Za-z0-9\s]+", iban):
+        return False
+    compact = re.sub(r"\s", "", iban).upper()
+    if not re.fullmatch(r"[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}", compact):
+        return False
+    if len(compact) != _IBAN_LENGTHS.get(compact[:2]):
+        return False
+    if not 2 <= int(compact[2:4]) <= 98:
+        return False
+    numeric = "".join(str(ord(c) - 55) if c.isalpha() else c for c in compact[4:] + compact[:4])
+    return int(numeric) % 97 == 1
+
 
 def is_valid_bsn(bsn: str) -> bool:
     """
@@ -522,6 +561,8 @@ class RegexAnonymizer:
             elif tag == "Credit_Card" and self._validate_credit_card:
                 # Special handling for Credit_Card: validate with Luhn checksum
                 text = self._anonymize_credit_card(text, pat)
+            elif tag == "IBAN":
+                text = self._anonymize_iban(text, pat)
             elif tag == "Postcode":
                 text = self._anonymize_postcode(text, pat, legacy_only=True)
             else:
@@ -655,6 +696,43 @@ class RegexAnonymizer:
             return bsn  # Keep original if invalid
 
         return pattern.sub(replace_if_valid, text)
+
+    def _anonymize_iban(self, text: str, pattern: Pattern) -> str:
+        """Add validated foreign accounts while retaining existing masking priorities."""
+        mask = self._mask.format(tag=TRANSLATIONS[TAG_LANGUAGE].get("IBAN", "IBAN"))
+        if pattern.pattern != _IBAN_PATTERN:
+            return pattern.sub(mask, text)  # Preserve explicitly configured patterns.
+        protected = None
+        cursor = 0
+
+        def replace(match: re.Match) -> str:
+            nonlocal protected, cursor
+            value = match.group(0)
+            if _LEGACY_NL_IBAN_RE.fullmatch(value):
+                return mask  # A mistyped Dutch account must remain fully masked.
+            if not is_valid_iban(value):
+                return value
+            if protected is None:
+                # Do not split URLs or erase cues used by later masking rules.
+                guards = [self._SIGN_OFF_RE, re.compile(
+                    rf'({self._NUMBER_INDICATORS})(\s*[\-:]*\s*)(\d+)\b', re.IGNORECASE
+                )]
+                if "URL" in self._patterns:
+                    guards.append(self._patterns["URL"])
+                if "BSN" in self._patterns and self._validate_bsn:
+                    guards.append(self._BSN_CONTEXT_RE)
+                protected = sorted(m.span() for guard in guards for m in guard.finditer(text))
+            while cursor < len(protected) and protected[cursor][1] <= match.start():
+                cursor += 1
+            index = cursor
+            while index < len(protected) and protected[index][0] < match.end():
+                start, end = protected[index]
+                if start < match.start() or end > match.end():
+                    return value
+                index += 1
+            return mask
+
+        return pattern.sub(replace, text)
 
     def _anonymize_credit_card(self, text: str, pattern: Pattern) -> str:
         """
